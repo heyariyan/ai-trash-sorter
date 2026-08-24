@@ -15,3 +15,4 @@ All notable project changes are documented here.
 - Added M3 Kaggle bootstrap/remapping scripts, a transparent RGB-centroid baseline, and Pi-compatible offline inference.
 - Downloaded Kaggle dataset version 1, remapped 4,752 images, and measured baseline holdout accuracy of 0.515; Pi deployment remains pending.
 - Verified temporary Pi inference on a saved 640x480 JPEG: `OTHER`, score 0.318736, measured inference time 316.986 ms; temporary files removed.
+- Added M4 hardware-independent U1 presence detection with ultrasonic mock, debouncing, and calibration documentation.

@@ -50,4 +50,4 @@ The deployed Pi will eventually use `/opt/ai-trash-sorter/` for application file
 
 ## M0 outcome
 
-M0 is complete. M1 documentation, a provisional BCM GPIO map, and the fixed-sensor/bin-position mapping design have been added. M2 capture-only camera code is present with a Picamera2 adapter and deterministic mock, and the real OV5647 camera was verified on the Pi. M3 v0 now contains a dataset bootstrap/remapper, transparent baseline, and offline inference path; temporary inference on a saved Pi JPEG passed. M1 electrical details remain to be validated before GPIO drivers or actuators are used.
+M0 is complete. M1 documentation, a provisional BCM GPIO map, and the fixed-sensor/bin-position mapping design have been added. M2 capture-only camera code is present with a Picamera2 adapter and deterministic mock, and the real OV5647 camera was verified on the Pi. M3 v0 contains a dataset bootstrap/remapper, transparent baseline, and offline inference path; temporary inference on a saved Pi JPEG passed. M4 now contains a hardware-independent U1 presence detector and simulation tests. M1 electrical details remain to be validated before GPIO drivers or actuators are used.
