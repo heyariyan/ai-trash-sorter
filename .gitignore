@@ -1,0 +1,52 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+secrets.env
+device.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android and IDE files
+*.iml
+.idea/
+.vscode/
+android/.gradle/
+android/local.properties
+
+# Training data, experiments, and model outputs
+training/dataset/raw/
+training/dataset/processed/
+training/experiments/
+training/**/*.jpg
+training/**/*.jpeg
+training/**/*.png
+training/**/*.tflite
+
+# Device runtime data and captured images
+raspberry-pi/model/*.tflite
+raspberry-pi/model/*.onnx
+raspberry-pi/config/device.yaml
+raspberry-pi/config/secrets.env
+var/
+runtime/
+images/
+logs/
+pocketbase/pb_data/
+
+# OS files
+.DS_Store
+Thumbs.db
