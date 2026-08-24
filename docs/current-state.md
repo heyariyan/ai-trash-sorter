@@ -29,7 +29,7 @@ No Pi hostname, IP address, SSH configuration, or physical connection was suppli
 
 ## Hardware
 
-No AI Trash Sorter-specific inventory or wiring record exists in this workspace. In particular, the exact stepper-driver model and OLED interface/controller are unknown. GPIO code must not be written until M1 confirms them.
+The developer confirmed a Raspberry Pi 3B+, Raspberry Pi Camera, five ultrasonic sensors (4+1), MG995 servo, NEMA17 stepper, DRV8825 stepper driver, Hall-effect sensor module, four touch switches, and an OLED. The ultrasonic, Hall, touch, and OLED module variants and electrical levels are still unverified. GPIO code must not be written until those details and wiring are checked.
 
 ## Planned repository and deployment boundaries
 
@@ -50,4 +50,4 @@ The deployed Pi will eventually use `/opt/ai-trash-sorter/` for application file
 
 ## M0 outcome
 
-M0 is complete. M1 documentation has been added, but M1 remains blocked pending an exact stepper-driver model and OLED interface/controller, plus the actual purchased hardware and its wiring details.
+M0 is complete. M1 documentation and a provisional BCM GPIO map have been added. M1 remains blocked pending the DRV8825 carrier-board pinout/current-limit details, OLED interface/controller, sensor output voltages, power supplies, and continuity-tested wiring.
