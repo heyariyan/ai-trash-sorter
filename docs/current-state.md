@@ -50,4 +50,4 @@ The deployed Pi will eventually use `/opt/ai-trash-sorter/` for application file
 
 ## M0 outcome
 
-M0 is complete. M1 documentation and a provisional BCM GPIO map have been added. M1 remains blocked pending the DRV8825 carrier-board pinout/current-limit details, OLED interface/controller, sensor output voltages, power supplies, and continuity-tested wiring.
+M0 is complete. M1 documentation, a provisional BCM GPIO map, and the fixed-sensor/bin-position mapping design have been added. M1 remains blocked pending the DRV8825 carrier-board pinout/current-limit details, OLED interface/controller, sensor output voltages, power supplies, mechanical station angles, and continuity-tested wiring.
