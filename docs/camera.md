@@ -1,6 +1,6 @@
 # M2 camera capture
 
-Status: **Implemented capture abstraction; Pi capture pending a connected-camera test.**
+Status: **M2 complete: capture abstraction and real Pi camera verification passed.**
 
 ## Design
 
@@ -31,6 +31,19 @@ Run only after Picamera2 is installed and the camera ribbon cable has been inspe
 ```
 
 Do not connect this test to the sorter state machine until the capture files and timings are verified.
+
+## Verified on Raspberry Pi
+
+On 2026-08-24, the connected Raspberry Pi 3B+ was detected over SSH as running Python 3.13.5 with Picamera2 available. The camera was identified as an OV5647. The repository adapter's Picamera2 sequence captured and closed a real image successfully:
+
+| Field | Measured result |
+| --- | --- |
+| Requested size | 640 x 480 |
+| Output | Valid JPEG, 28,451 bytes |
+| `capture_time_ms` | 267.847 ms (one capture sample) |
+| Motor/servo activity | None |
+
+This is a verification sample, not a performance guarantee. More samples will be collected when the capture path is integrated with the U1 trigger.
 
 ## Command
 
