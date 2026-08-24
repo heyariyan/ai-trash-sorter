@@ -50,4 +50,4 @@ The deployed Pi will eventually use `/opt/ai-trash-sorter/` for application file
 
 ## M0 outcome
 
-M0 is complete. The next safe milestone is M1: Hardware inventory. It is blocked pending an exact stepper-driver model and OLED interface/controller, plus the actual purchased hardware and its wiring details.
+M0 is complete. M1 documentation has been added, but M1 remains blocked pending an exact stepper-driver model and OLED interface/controller, plus the actual purchased hardware and its wiring details.
