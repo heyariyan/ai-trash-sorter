@@ -6,7 +6,7 @@ The physical sorting loop is designed to work entirely offline. Remote access an
 
 ## Project status
 
-Milestone M0 (environment and repository audit) is complete. The next milestone is a hardware inventory. No GPIO driver, motor-control code, or physical actuator test has been created or performed.
+Milestones M0 and M1 documentation are complete. M2 camera capture is implemented in capture-only mode; Pi camera verification remains pending. No motor-control code or physical actuator test has been created or performed.
 
 ## Safety
 
