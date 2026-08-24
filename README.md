@@ -18,4 +18,4 @@ The target layout and deployment boundaries are documented in [docs/current-stat
 
 ## License
 
-No license has been selected yet. A license decision will follow review of third-party dependencies and dataset terms.
+The project is released under the MIT License in [LICENSE](LICENSE).
