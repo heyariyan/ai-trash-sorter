@@ -1,6 +1,6 @@
 # M3 visual AI baseline
 
-Status: **Baseline trained and local inference verified; Pi deployment/inference pending SSH reachability.**
+Status: **M3 v0 complete: baseline trained, local inference verified, and temporary Pi inference passed.**
 
 ## Dataset
 
@@ -29,7 +29,7 @@ The M3 baseline is a deliberately transparent RGB-centroid classifier. It resize
 | Holdout accuracy | 0.515 |
 | Input | 8x8 RGB |
 | Quantization | None; float JSON baseline |
-| Deployment status | Not deployed |
+| Deployment status | Temporary Pi verification only; not production-deployed |
 
 One local sample from the dataset's Plastic folder was classified as `OTHER` with a 34.11% score. This is expected evidence that the baseline needs a real visual model and domain-specific Pi feedback before it can control a sorter.
 
@@ -37,10 +37,10 @@ One local sample from the dataset's Plastic folder was classified as `OTHER` wit
 
 `raspberry-pi/app/ai/inference.py` loads the same JSON format and returns `category`, `confidence`, `model_version`, `inference_time_ms`, and `timestamp`. It performs no GPIO, motor, servo, network, or database work.
 
-The Pi test is still pending because SSH to the previously reachable Pi address timed out during model transfer. No permanent model or code was installed on the Pi.
+The baseline was copied temporarily to `/tmp` on the Pi and run against `/home/ariyan/Pictures/ai-trash-sorter-20260824-155418.jpg`. It returned `OTHER` with a 0.318736 score and measured `inference_time_ms=316.986`. The temporary model, module, and runner were removed after the test; no permanent model or code was installed.
 
 ## Next work
 
-1. Restore Pi SSH reachability and run this model against the saved Pi JPEG in `/home/ariyan/Pictures/` using a temporary runtime copy.
-2. Replace the RGB-centroid baseline with a small image model suitable for TFLite/quantized deployment.
-3. Evaluate on owner-reviewed Pi images before any deployment approval.
+1. Replace the RGB-centroid baseline with a small image model suitable for TFLite/quantized deployment.
+2. Evaluate on owner-reviewed Pi images before any deployment approval.
+3. Begin M4 object detection using U1, without coupling it to motor movement.

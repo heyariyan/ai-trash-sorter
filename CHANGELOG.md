@@ -14,3 +14,4 @@ All notable project changes are documented here.
 - Verified the real Pi OV5647 camera with the repository Picamera2 flow at 640x480; recorded one measured capture sample.
 - Added M3 Kaggle bootstrap/remapping scripts, a transparent RGB-centroid baseline, and Pi-compatible offline inference.
 - Downloaded Kaggle dataset version 1, remapped 4,752 images, and measured baseline holdout accuracy of 0.515; Pi deployment remains pending.
+- Verified temporary Pi inference on a saved 640x480 JPEG: `OTHER`, score 0.318736, measured inference time 316.986 ms; temporary files removed.
