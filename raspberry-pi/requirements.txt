@@ -1,0 +1,2 @@
+# Install on the Pi using the OS package where possible.
+Pillow>=10.0

@@ -6,7 +6,7 @@ The physical sorting loop is designed to work entirely offline. Remote access an
 
 ## Project status
 
-Milestones M0 and M1 documentation are complete. M2 camera capture and real Pi verification are complete. No motor-control code or physical actuator test has been created or performed.
+Milestones M0 and M1 documentation are complete. M2 camera capture and real Pi verification are complete. M3 has a trained transparent baseline and local inference; Pi deployment is pending SSH reachability. No motor-control code or physical actuator test has been created or performed.
 
 ## Safety
 

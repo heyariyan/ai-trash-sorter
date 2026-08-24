@@ -30,7 +30,10 @@ android/local.properties
 # Training data, experiments, and model outputs
 training/dataset/raw/
 training/dataset/processed/
+training/dataset/manifests/
 training/experiments/
+training/runs/
+training/models/
 training/**/*.jpg
 training/**/*.jpeg
 training/**/*.png
@@ -39,6 +42,7 @@ training/**/*.tflite
 # Device runtime data and captured images
 raspberry-pi/model/*.tflite
 raspberry-pi/model/*.onnx
+raspberry-pi/model/*.json
 raspberry-pi/config/device.yaml
 raspberry-pi/config/secrets.env
 var/
