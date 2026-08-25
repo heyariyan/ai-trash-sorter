@@ -38,3 +38,15 @@ No servo, IR sensor, camera, or sorter state machine was started.
 Please confirm whether the shaft moved in the expected direction, moved the
 expected amount, and remained mechanically quiet/cool. No second movement or
 direction-reversal test should run until that observation is recorded.
+
+## Authorized duration test
+
+After the developer confirmed `ENABLE`, `RESET`, and `SLEEP` wiring, the
+bounded duration command was run once on the Pi:
+
+```json
+{"direction": 0, "elapsed_ms": 10183.251, "pulse_delay_ms": 5.0, "pulses": 981, "requested_seconds": 10.0, "safe_off": true}
+```
+
+This records the GPIO/software result only; physical motion and thermal
+behavior still require the developer's observation.
