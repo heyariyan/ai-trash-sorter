@@ -29,7 +29,7 @@ No Pi hostname, IP address, SSH configuration, or physical connection was suppli
 
 ## Hardware
 
-The developer confirmed a Raspberry Pi 3B+, Raspberry Pi Camera, five ultrasonic sensors (4+1), MG995 servo, NEMA17 stepper, DRV8825 stepper driver, Hall-effect sensor module, four touch switches, and an OLED. The ultrasonic, Hall, touch, and OLED module variants and electrical levels are still unverified. GPIO code must not be written until those details and wiring are checked.
+The developer confirmed a Raspberry Pi 3B+, Raspberry Pi Camera, two ultrasonic sensors, MG995 servo, NEMA17 stepper, DRV8825 stepper driver, an IR home sensor, four touch switches, and an OLED. The ultrasonic, IR, touch, and OLED module variants and electrical levels are still unverified. GPIO code must not be written until those details and wiring are checked.
 
 ## Planned repository and deployment boundaries
 
@@ -50,4 +50,4 @@ The deployed Pi will eventually use `/opt/ai-trash-sorter/` for application file
 
 ## M0 outcome
 
-M0 is complete. M1 documentation, a provisional BCM GPIO map, and the fixed-sensor/bin-position mapping design have been added. M2 capture-only camera code is present with a Picamera2 adapter and deterministic mock, and the real OV5647 camera was verified on the Pi. M3 v0 contains a dataset bootstrap/remapper, transparent baseline, and offline inference path; temporary inference on a saved Pi JPEG passed. M4 now contains a hardware-independent U1 presence detector and simulation tests. M1 electrical details remain to be validated before GPIO drivers or actuators are used.
+M0 is complete. M1 documentation, a provisional BCM GPIO map, and the fixed-sensor/bin-position mapping design have been added. M2 capture-only camera code is present with a Picamera2 adapter and deterministic mock, and the real OV5647 camera was verified on the Pi. M3 v0 contains a dataset bootstrap/remapper, transparent baseline, and offline inference path; the new TACO+Kaggle mapping requires retraining. M4 contains a hardware-independent U1 presence detector and simulation tests. Hardware planning now uses two ultrasonic sensors and an active-low IR home sensor; electrical details remain to be validated before GPIO drivers or actuators are used.

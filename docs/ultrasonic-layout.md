@@ -1,57 +1,70 @@
-# Ultrasonic sensor layout and bin mapping
+# Ultrasonic sensor layout and bin-status plan
 
-Status: **Design decision for the five fixed sensors; physical placement still requires measurement.**
+Status: **Planning update: two fixed ultrasonic sensors; physical placement and electrical levels still require validation.**
 
-The sensors do not rotate with the carousel. Sensor names (`U1` through `U5`) therefore identify fixed physical stations, not permanent waste categories. The software must combine each reading with the stepper's calibrated position and the Hall home reference.
+The project now uses two ultrasonic sensors only. Sensor identity is fixed by its physical role, while the logical bin identity comes from the stepper position and selected bin.
 
 ## Assignment
 
 | Sensor | Fixed location | Purpose | When read |
 | --- | --- | --- | --- |
-| U1 | Insertion chute, before the camera view | Detect an item and activate the capture/classification workflow | Continuously or by a debounced polling loop while IDLE |
-| U2 | Fill station A around the carousel | Measure the bin currently at station A | Only while the stepper is stopped |
-| U3 | Fill station B around the carousel | Measure the bin currently at station B | Only while the stepper is stopped |
-| U4 | Fill station C around the carousel | Measure the bin currently at station C | Only while the stepper is stopped |
-| U5 | Fill station D around the carousel | Measure the bin currently at station D | Only while the stepper is stopped |
+| U1 | Insertion chute, before the camera view | Detect an item and start the camera/classification workflow | Debounced polling while IDLE |
+| U2 | Post-drop bin-status position | Measure the selected bin after the trash has been loaded | After gate close and mechanical settling |
 
-U1 is the camera trigger. U2-U5 are not camera triggers and do not directly mean BIODEGRADABLE, PLASTIC, METAL, or OTHER. They report the fill level of whichever physical bin is aligned with their station.
+U1 is the only camera trigger. U2 is the only bin-status sensor. U2 does not classify the item and does not replace the AI prediction; it records a distance/fill observation associated with the selected logical bin.
 
-## Position-to-bin calculation
-
-After homing, define:
+## Sorting-cycle sequence
 
 ```text
-theta_machine = calibrated carousel angle relative to Hall home
-bin_pitch     = 360 degrees / number_of_bins
-bin_angle(i)  = (theta_machine + i * bin_pitch) modulo 360
+U1 detects item
+  -> capture image
+  -> classify item
+  -> move selected bin to drop position
+  -> open gate
+  -> item drops
+  -> close gate
+  -> wait for mechanical settling
+  -> trigger U2 and take validated samples
+  -> save selected_bin + U2 distance/fill observation
+  -> return home / READY
 ```
 
-For each fixed fill station `j`, store its measured angle `station_angle(j)`. A bin is considered aligned when the wrapped angular error is within a measured tolerance:
+U2 must not be sampled while the gate is open, while the item is falling, or while the stepper is moving. Those conditions can produce a false fill reading.
+
+## Position-to-bin association
+
+U2 is fixed, so its sensor number is not a permanent material category. The event must store the selected logical bin and the calibrated stepper position at the time of the U2 read:
 
 ```text
-error = abs(wrap_to_minus180_180(bin_angle(i) - station_angle(j)))
-aligned if error <= alignment_tolerance
+selected_bin = decision selected by the AI
+carousel_angle = calibrated stepper angle after homing
+u2_distance_cm = median of valid post-drop samples
 ```
 
-The event record stores the logical bin ID, the fixed station sensor, the stepper position, and the distance sample. This prevents a fixed sensor from being permanently associated with one category while the carousel rotates.
+If the mechanism requires the selected bin to move to a separate U2 inspection position, the state machine must perform that move before sampling and record the final angle. If the drop position and U2 position are the same, no additional movement is required.
 
-## Measurement policy
+## Measurement and dataset record
 
-- Trigger only one ultrasonic sensor at a time to avoid acoustic cross-talk.
-- Read fill sensors after the stepper has stopped and a mechanical settling delay has elapsed.
-- Take several samples, reject timeouts/outliers, and use a median distance.
-- Convert distance to a fill percentage only after measuring each bin's empty and full reference distances.
-- If the carousel angle is not homed or a station is not aligned, mark the fill reading unknown rather than assigning it to a bin.
-- Keep fill-level sensing out of the first offline sorting loop; it is a later feature once object detection and sorting are stable.
+For each completed drop, record:
 
-## Calibration required
+- `event_id` and timestamp
+- predicted category and confidence
+- `selected_bin`
+- calibrated stepper angle/position
+- U2 distance samples and median distance
+- empty/full calibration values and derived fill percentage, when calibrated
+- sensor timeout/invalid status
 
-Before enabling U2-U5 in software, measure and record:
+U2 observations become training metadata and bin-status data. They must not silently overwrite the visual label.
 
-1. Hall-home angle and step count.
-2. Steps per revolution and selected DRV8825 microstep mode.
-3. Each station angle and alignment tolerance.
-4. Empty and full distance for every bin geometry.
-5. Ultrasonic Echo voltage and the level-shifter/divider used.
+## Calibration and physical gate
+
+Before enabling U2 in software, measure and record:
+
+1. Empty-bin and full-bin distances at the U2 mounting position.
+2. A valid distance range and timeout behavior.
+3. The settling delay after gate close.
+4. Ultrasonic Echo voltage and the verified divider/level shifter.
+5. Whether the selected bin is already under U2 after dropping or needs a separate position.
 
 No actuator movement or ultrasonic wiring is authorized from this document alone.

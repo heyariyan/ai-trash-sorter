@@ -13,9 +13,9 @@ LABEL_MAP = {
     "vegetation": "BIODEGRADABLE",
     "plastic": "PLASTIC",
     "metal": "METAL",
-    "cardboard": "OTHER",
+    "cardboard": "BIODEGRADABLE",
     "glass": "OTHER",
-    "paper": "OTHER",
+    "paper": "BIODEGRADABLE",
     "textile trash": "OTHER",
     "miscellaneous trash": "OTHER",
 }

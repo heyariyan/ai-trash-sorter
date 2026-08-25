@@ -9,12 +9,13 @@ This is a planning document, not a wiring instruction. Pin numbers and connectio
 ```text
 Raspberry Pi 3B+
   +-- camera connector ---------------- Raspberry Pi Camera
-  +-- GPIO ---------------------------- Hall sensor module (level check first)
+  +-- GPIO ---------------------------- IR home sensor (active-low; level check first)
   +-- GPIO ---------------------------- four touch switches (level check first)
   +-- GPIO ---------------------------- DRV8825 STEP/DIR/ENABLE/RESET/SLEEP
   +-- GPIO/PWM ------------------------ MG995 servo signal
   +-- I2C (proposed) ------------------ OLED (controller/interface confirmation required)
-  +-- GPIO ---------------------------- five ultrasonic TRIG/ECHO pairs
+  +-- GPIO ---------------------------- U1 intake ultrasonic TRIG/ECHO
+  +-- GPIO ---------------------------- U2 post-drop bin-status TRIG/ECHO
 
 Separate motor supply ----------------- DRV8825 VMOT and NEMA17
 Separate regulated servo supply ------- MG995 power
@@ -30,10 +31,11 @@ Pi ground and signal grounds ----------- common ground after electrical review
 - Ultrasonic Echo lines must be level-shifted or divided if the selected sensor drives 5 V; Pi GPIO inputs are 3.3 V only.
 - MG995 power must come from a regulated supply sized for its stall current, with grounds commoned to the Pi signal ground.
 - Confirm a common ground between the Pi and each externally powered driver.
-- Add appropriate pull-up or pull-down resistors only after the Hall sensor and switch electrical behavior is known.
+- Configure the IR home input as active-low only after its output voltage and idle level are measured.
+- Add appropriate pull-up or pull-down resistors only after the IR and switch electrical behavior is known.
 - Keep actuator power disabled while checking continuity and GPIO levels.
 - Do not connect or energize the circuit from this document until the inventory table is complete and reviewed.
 
 ## Missing information
 
-The OLED controller/interface, motor and servo supply ratings, sensor output levels, switch polarity, and final continuity-tested wiring are still unknown.
+The OLED controller/interface, motor and servo supply ratings, ultrasonic output levels, IR output level, switch polarity, and final continuity-tested wiring are still unknown.

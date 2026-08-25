@@ -12,7 +12,7 @@ The map below reserves I2C GPIO2/3 for the OLED if (and only if) the module is c
 | Stepper RESET | 7 | 26 | Output; hold disabled during startup | DRV8825 carrier pinout required |
 | Stepper SLEEP | 9 | 21 | Output; hold disabled during startup | DRV8825 carrier pinout required |
 | Servo signal | 18 | 12 | Hardware-PWM-capable output | MG995 supply and signal level required |
-| Hall sensor | 23 | 16 | Input; level/polarity TBD | Module output check required |
+| IR home sensor | 23 | 16 | Input; active-low; LOW = home/0 degrees | Output voltage and idle level required |
 | YES switch | 20 | 38 | Input; debounce and polarity TBD | Touch-module output check required |
 | NO switch | 21 | 40 | Input; debounce and polarity TBD | Touch-module output check required |
 | PREV switch | 16 | 36 | Input; debounce and polarity TBD | Touch-module output check required |
@@ -20,9 +20,6 @@ The map below reserves I2C GPIO2/3 for the OLED if (and only if) the module is c
 | OLED SDA (I2C) | 2 | 3 | I2C SDA; fixed pull-up present | OLED must be confirmed I2C |
 | OLED SCL (I2C) | 3 | 5 | I2C SCL; fixed pull-up present | OLED must be confirmed I2C |
 | U1 intake/object TRIG/ECHO | 4 / 5 | 7 / 29 | Output / divided input | Fixed at insertion point; triggers camera workflow |
-| U2 fill station A TRIG/ECHO | 17 / 6 | 11 / 31 | Output / divided input | Fixed frame; maps to current bin by calibrated angle |
-| U3 fill station B TRIG/ECHO | 27 / 13 | 13 / 33 | Output / divided input | Fixed frame; maps to current bin by calibrated angle |
-| U4 fill station C TRIG/ECHO | 22 / 19 | 15 / 35 | Output / divided input | Fixed frame; maps to current bin by calibrated angle |
-| U5 fill station D TRIG/ECHO | 26 / 10 | 37 / 19 | Output / divided input | Fixed frame; maps to current bin by calibrated angle |
+| U2 post-drop bin-status TRIG/ECHO | 17 / 6 | 11 / 31 | Output / divided input | Read after gate close and settling; maps to selected bin |
 
 The proposed map must be checked against the actual OLED interface, module pinouts, power rails, level shifting, current-limit setup, and emergency-stop plan before it becomes the approved map.

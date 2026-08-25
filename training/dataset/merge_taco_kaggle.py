@@ -52,6 +52,45 @@ TACO_TO_4CLASS = {
     "Uncertainty": "OTHER",  # Low-confidence TACO annotations
 }
 
+
+def _normalise_taco_category(value: str) -> str:
+    """Normalize TACO category spelling and separators."""
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", value.lower())).strip()
+
+
+TACO_TO_4CLASS_NORMALIZED = {
+    _normalise_taco_category(source): target for source, target in TACO_TO_4CLASS.items()
+}
+
+
+def remap_taco_category(category: str) -> str:
+    """Map known and common TACO taxonomy variants to the four project classes.
+
+    Unknown categories intentionally remain OTHER. The category audit must be
+    updated if a future TACO release introduces a material that these rules do
+    not cover.
+    """
+    normalized = _normalise_taco_category(category)
+    direct = TACO_TO_4CLASS_NORMALIZED.get(normalized)
+    if direct is not None:
+        return direct
+
+    # TACO contains variants such as plastic bottle caps, wrappers, and lids.
+    if "plastic" in normalized:
+        return "PLASTIC"
+
+    # Cover explicit metal variants and common metal-only litter names.
+    if any(token in normalized for token in ("metal", "aluminium", "aluminum", "steel")):
+        return "METAL"
+    if normalized in {"drink can", "pop tab", "foil"}:
+        return "METAL"
+
+    # Paper/cardboard/carton items are biodegradable under the project policy.
+    if any(token in normalized for token in ("paper", "cardboard", "carton", "food waste", "organic")):
+        return "BIODEGRADABLE"
+
+    return "OTHER"
+
 # ============================================================================
 # KAGGLE 9-CLASS TAXONOMY → 4-CLASS REMAPPING (from existing remap_labels.py)
 # ============================================================================
@@ -153,7 +192,7 @@ def process_taco_images(
             # Use primary (first) annotation
             ann = annotations[0]
             taco_class = ann["category"]
-            target_class = TACO_TO_4CLASS.get(taco_class, "OTHER")
+            target_class = remap_taco_category(taco_class)
             img_path = ann["path"]
             
             # Enforce per-class limit

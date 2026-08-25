@@ -4,7 +4,7 @@ Status: **Simulation and debounced detector implemented; U1 GPIO wiring remains 
 
 ## U1 role
 
-U1 is the fixed ultrasonic sensor at the insertion chute. It detects that an item is present and triggers the later camera workflow. U2-U5 remain fill-level sensors and are not part of this milestone.
+U1 is the fixed ultrasonic sensor at the insertion chute. It detects that an item is present and triggers the later camera workflow. U2 is reserved for the post-drop bin-status measurement and is not part of this trigger detector.
 
 ## Software boundary
 
@@ -24,4 +24,4 @@ Before adding a GPIO implementation, confirm the exact ultrasonic module and Ech
 3. A threshold with margin between those distributions.
 4. Sensor timeout behavior and maximum polling rate.
 
-Only after those readings are recorded may a real U1 adapter be added. The first hardware test must be sensor-read-only and must not start the camera or move an actuator.
+Only after those readings are recorded may a real U1 adapter be added. The first hardware test must be sensor-read-only and must not start the camera or move an actuator. U2 must be sampled only after gate close and mechanical settling.
