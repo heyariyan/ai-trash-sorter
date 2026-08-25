@@ -14,12 +14,17 @@ def main() -> int:
     parser.add_argument("--closed-angle", type=float, default=0.0)
     parser.add_argument("--open-angle", type=float, default=90.0)
     parser.add_argument("--settle-seconds", type=float, default=0.5)
+    parser.add_argument(
+        "--normal-direction",
+        action="store_true",
+        help="use increasing pulse width for increasing angle",
+    )
     parser.add_argument("--confirm-movement", action="store_true")
     args = parser.parse_args()
     if not args.confirm_movement:
         raise SystemExit("refusing servo movement; pass --confirm-movement after preflight")
 
-    servo = LgpioServo(signal_gpio=args.signal_gpio)
+    servo = LgpioServo(signal_gpio=args.signal_gpio, reverse=not args.normal_direction)
     gate = ServoGate(
         servo,
         GateConfig(

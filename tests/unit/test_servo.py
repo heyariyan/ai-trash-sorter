@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "raspberry-pi" / "app"))
 
-from motors.servo import GateConfig, MockServo, ServoGate  # noqa: E402
+from motors.servo import GateConfig, LgpioServo, MockServo, ServoGate  # noqa: E402
 
 
 class ServoTests(unittest.TestCase):
@@ -27,6 +27,16 @@ class ServoTests(unittest.TestCase):
     def test_mock_requires_start(self) -> None:
         with self.assertRaises(RuntimeError):
             MockServo().set_angle(90)
+
+    def test_installed_reversed_mapping_matches_verified_script(self) -> None:
+        servo = LgpioServo()
+        self.assertEqual(servo.pulse_for_angle(0), 2500)
+        self.assertEqual(servo.pulse_for_angle(90), 1500)
+
+    def test_normal_mapping_can_be_selected(self) -> None:
+        servo = LgpioServo(reverse=False)
+        self.assertEqual(servo.pulse_for_angle(0), 500)
+        self.assertEqual(servo.pulse_for_angle(90), 1500)
 
 
 if __name__ == "__main__":

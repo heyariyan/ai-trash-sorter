@@ -1,8 +1,8 @@
 """MG995 servo and drop-gate abstractions.
 
-The GPIO implementation emits standard 50 Hz servo PWM on BCM GPIO18. Pulse
-limits and gate angles are configuration values: they must be calibrated on the
-installed mechanism before the servo is energized.
+    The GPIO implementation emits standard 50 Hz servo pulses on BCM GPIO18.
+    The installed gate is reversed: 0 degrees maps to 2500 us and 90 degrees
+    maps to 1500 us. Pulse limits and angles remain configurable.
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ class LgpioServo:
         frequency_hz: int = 50,
         min_pulse_us: int = 500,
         max_pulse_us: int = 2500,
+        reverse: bool = True,
     ) -> None:
         if signal_gpio < 0:
             raise ValueError("signal_gpio must be non-negative")
@@ -37,6 +38,7 @@ class LgpioServo:
         self.frequency_hz = frequency_hz
         self.min_pulse_us = min_pulse_us
         self.max_pulse_us = max_pulse_us
+        self.reverse = reverse
         self._gpio = None
         self._handle: int | None = None
 
@@ -72,18 +74,20 @@ class LgpioServo:
             raise ValueError(
                 f"pulse_us must be between {self.min_pulse_us} and {self.max_pulse_us}"
             )
-        period_us = 1_000_000 / self.frequency_hz
-        duty_percent = pulse_us / period_us * 100
-        gpio.tx_pwm(handle, self.signal_gpio, self.frequency_hz, duty_percent)
+        gpio.tx_servo(handle, self.signal_gpio, pulse_us, self.frequency_hz)
 
-    def set_angle(self, angle: float) -> None:
+    def pulse_for_angle(self, angle: float) -> int:
         if not 0 <= angle <= 180:
             raise ValueError("angle must be between 0 and 180 degrees")
-        pulse = round(
-            self.min_pulse_us
-            + (self.max_pulse_us - self.min_pulse_us) * angle / 180
+        fraction = angle / 180
+        if self.reverse:
+            fraction = 1 - fraction
+        return round(
+            self.min_pulse_us + (self.max_pulse_us - self.min_pulse_us) * fraction
         )
-        self.set_pulse_us(pulse)
+
+    def set_angle(self, angle: float) -> None:
+        self.set_pulse_us(self.pulse_for_angle(angle))
 
     def stop(self) -> None:
         if self._gpio is None or self._handle is None:
@@ -91,7 +95,7 @@ class LgpioServo:
         gpio, handle = self._gpio, self._handle
         try:
             try:
-                gpio.tx_pwm(handle, self.signal_gpio, 0, 0)
+                gpio.tx_servo(handle, self.signal_gpio, 0, 0)
             except Exception:
                 pass
             try:

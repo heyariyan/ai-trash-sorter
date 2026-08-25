@@ -1,8 +1,16 @@
 # M7 MG995 servo gate
 
-Status: **Software and simulation complete; physical servo test pending.**
+Status: **M7 complete; physical servo direction and open/close cycle verified by the developer.**
 
-The MG995 signal is assigned to BCM GPIO18. The driver emits 50 Hz PWM with
+The MG995 signal is assigned to BCM GPIO18. The verified installation uses 50 Hz
+`lgpio.tx_servo` pulses with reversed direction:
+
+- 0 degrees -> 2500 microseconds
+- 90 degrees -> 1500 microseconds
+
+The driver defaults to this reversed mapping; `--normal-direction` is available
+only for a different linkage. The original pulse limits and gate angles remain
+configurable. The driver emits 50 Hz PWM with
 configurable 500–2500 microsecond pulse limits. Closed/open angles and settling
 time are configurable because the installed linkage must be calibrated without
 driving into its mechanical stops.
@@ -25,7 +33,7 @@ The guarded command is:
 ```bash
 PYTHONPATH=/home/ariyan/ai-trash-sorter-test/app \
 /home/ariyan/.venvs/ai-trash-sorter/bin/python -m motors.servo_test \
-  --signal-gpio 18 --closed-angle 15 --open-angle 75 \
+  --signal-gpio 18 --closed-angle 0 --open-angle 90 \
   --settle-seconds 0.5 --confirm-movement
 ```
 
@@ -43,6 +51,5 @@ runtime returned:
 {"closed": true, "safe_stop": true}
 ```
 
-This confirms the PWM command completed and stopped safely. The developer's
-physical observation of the gate travel must be recorded before M7 is marked
-fully complete.
+This confirms the servo command completed and stopped safely. The developer
+verified the physical direction and the 0-degree/90-degree gate travel.
