@@ -42,3 +42,19 @@ PYTHONPATH=/home/ariyan/ai-trash-sorter-test/app \
 The `--direction` value is a mechanical installation property and must be
 confirmed during the first homing test. This command must not be run while
 adjusting VREF or while any person is inside the mechanism's travel area.
+
+## First physical attempt
+
+With developer authorization, the command was run once on the Pi using
+`--direction 0`, `--max-steps 100`, and a 20 ms pulse delay. It stopped safely
+with:
+
+```json
+{"error": "home not detected within 100 steps", "safe_off": true}
+```
+
+A subsequent read-only GPIO check returned level `0` (`is_home=false`). No
+additional movement was attempted. Before retrying, verify the mechanical
+direction toward the sensor, the sensor's physical alignment/clearance, and
+GPIO23 wiring/polarity. Increase the travel bound only after those checks;
+never bypass the bound.
