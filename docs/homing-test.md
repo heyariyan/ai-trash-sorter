@@ -73,6 +73,20 @@ The driver disabled safely. Do not keep repeating motor scans. Inspect the IR
 module alignment/marker, its 3.3 V supply and ground, and GPIO23 continuity;
 then perform a sensor-only level test before authorizing another movement.
 
+## Timed search attempt
+
+The authorized 90-second calibration search ran once with a 50 ms pulse delay,
+`direction=0`, and a 2,000-step ceiling. It timed out without GPIO23 becoming
+HIGH and shut the driver down safely:
+
+```json
+{"error": "home not detected within 90 seconds or 2000 steps", "safe_off": true}
+```
+
+This rules out only the earlier 100/200-step bound; it does not prove the
+effective mechanical revolution count. Inspect the IR signal path and home
+marker before any further actuator test.
+
 ## Timed calibration search
 
 For mechanical calibration only, `motors.timed_home_test` provides a hard
