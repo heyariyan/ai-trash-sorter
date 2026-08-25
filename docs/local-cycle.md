@@ -25,3 +25,17 @@ servo in one sequence. Confirm the already-tested stepper/IR/servo conditions,
 keep the mechanism clear, and authorize the combined cycle immediately before
 running it. The command always homes first and shuts down all GPIO resources in
 `finally`.
+
+## Pi AI-only image checks
+
+Before any combined actuator test, two existing images were run through the
+offline Pi model without camera or ultrasonic access:
+
+| Image | Prediction | Confidence | Inference time |
+| --- | --- | ---: | ---: |
+| `flattened-coca-cola-can...webp` | METAL | 98.44% | 851.221 ms |
+| `360_F_774178590...jpg` | OTHER | 60.55% | 261.441 ms |
+
+These are model measurements only; they do not authorize or represent a motor
+or servo movement. The second result remains a low-confidence classification
+and should be reviewed against its known material before training decisions.
