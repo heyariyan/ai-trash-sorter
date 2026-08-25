@@ -9,6 +9,7 @@ run.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import monotonic
 from typing import Protocol
 
 from sensors.ir_home import HomeSensor
@@ -62,3 +63,45 @@ def home_stepper(
             )
 
     raise HomingError(f"home not detected within {max_steps} steps")
+
+
+def home_stepper_for_seconds(
+    stepper: HomingStepper,
+    sensor: HomeSensor,
+    *,
+    direction: int = 0,
+    seconds: float = 90.0,
+    max_steps: int = 2000,
+) -> HomingResult:
+    """Search for home for a hard time-limited duration.
+
+    This is intentionally bounded by both time and steps. It is useful while
+    calibrating an unknown mechanical reduction, but it must not become the
+    production homing policy until the effective steps/revolution is known.
+    """
+
+    if direction not in (0, 1):
+        raise ValueError("direction must be 0 or 1")
+    if seconds <= 0:
+        raise ValueError("seconds must be positive")
+    if max_steps <= 0:
+        raise ValueError("max_steps must be positive")
+
+    if sensor.is_home():
+        return HomingResult(reached_home=True, steps_taken=0, already_home=True)
+
+    deadline = monotonic() + seconds
+    for steps_taken in range(1, max_steps + 1):
+        if monotonic() >= deadline:
+            break
+        stepper.move_steps(1, direction)
+        if sensor.is_home():
+            return HomingResult(
+                reached_home=True,
+                steps_taken=steps_taken,
+                already_home=False,
+            )
+
+    raise HomingError(
+        f"home not detected within {seconds:g} seconds or {max_steps} steps"
+    )

@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "raspberry-pi" / "app"))
 
-from motors.homing import HomingError, home_stepper  # noqa: E402
+from motors.homing import HomingError, home_stepper, home_stepper_for_seconds  # noqa: E402
 from sensors import MockHomeSensor  # noqa: E402
 
 
@@ -49,6 +49,23 @@ class HomingTests(unittest.TestCase):
     def test_rejects_invalid_bounds(self) -> None:
         with self.assertRaises(ValueError):
             home_stepper(FakeStepper(), MockHomeSensor([False]), max_steps=0)
+
+    def test_timed_search_stops_when_sensor_reaches_home(self) -> None:
+        stepper = FakeStepper()
+        result = home_stepper_for_seconds(
+            stepper,
+            MockHomeSensor([False, True]),
+            seconds=1,
+            max_steps=10,
+        )
+        self.assertTrue(result.reached_home)
+        self.assertEqual(result.steps_taken, 1)
+
+    def test_timed_search_has_step_bound(self) -> None:
+        with self.assertRaises(HomingError):
+            home_stepper_for_seconds(
+                FakeStepper(), MockHomeSensor([False]), seconds=1, max_steps=2
+            )
 
 
 if __name__ == "__main__":

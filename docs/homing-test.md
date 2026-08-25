@@ -72,3 +72,10 @@ the configured full-step setting). GPIO23 never became HIGH:
 The driver disabled safely. Do not keep repeating motor scans. Inspect the IR
 module alignment/marker, its 3.3 V supply and ground, and GPIO23 continuity;
 then perform a sensor-only level test before authorizing another movement.
+
+## Timed calibration search
+
+For mechanical calibration only, `motors.timed_home_test` provides a hard
+90-second deadline plus a 2,000-step ceiling. It samples GPIO23 after each
+bounded pulse and disables the driver on success, timeout, step limit, or
+exception. This is not an unlimited homing loop.

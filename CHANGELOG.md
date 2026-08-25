@@ -24,3 +24,4 @@ All notable project changes are documented here.
 - Recorded the authorized 10-second test result: the shaft moved briefly then vibrated, so further stepper tests are paused pending phase-wiring, current, supply, mechanical, and acceleration checks.
 - Recorded the developer's successful follow-up stepper movement report and added bounded GPIO23 IR-home sensing/homing policy with simulation tests.
 - Added calibrated four-stop bin positioning with shortest-path rotation and tests; servo drop sequencing remains in M7.
+- Added a dual-bounded timed IR-home calibration command (deadline plus step ceiling); no unlimited actuator loop is permitted.
