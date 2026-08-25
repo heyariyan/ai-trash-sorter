@@ -58,6 +58,8 @@ def main() -> int:
             home_direction=args.home_direction,
             max_home_steps=args.home_max_steps,
         )
+        # Establish a known gate state after boot calibration before the first item.
+        gate.close()
         results = []
         cycle = SortingCycle(model, position, gate)
         for image in args.images:
