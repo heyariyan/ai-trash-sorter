@@ -39,3 +39,18 @@ offline Pi model without camera or ultrasonic access:
 These are model measurements only; they do not authorize or represent a motor
 or servo movement. The second result remains a low-confidence classification
 and should be reviewed against its known material before training decisions.
+
+## First physical two-image cycle
+
+After the combined-test prerequisites were confirmed (600 effective steps per
+carousel revolution, actuator authorization, clear mechanism, and emergency
+cutoff), the guarded command ran on the Pi at `192.168.0.245`:
+
+- Boot calibration: home detected after 49 steps.
+- METAL image: stop 0 -> 2, 300 steps, position 12,072.698 ms, total 13,755.463 ms.
+- OTHER image: stop 2 -> 3, 150 steps, position 6,040.958 ms, total 7,189.832 ms.
+- Both cycles opened and closed the gate; all drivers stopped safely.
+
+These are measured software/GPIO timings. The developer's physical observation
+of the carousel stops and item drops must be recorded before M8 is marked fully
+complete.
