@@ -32,3 +32,17 @@ PYTHONPATH=/home/ariyan/ai-trash-sorter-test/app \
 Expected result: one close, one open, one close, then PWM stop. Stop
 immediately for binding, buzzing, overheating, unexpected travel, or a power
 rail drop. Do not run this command until the preflight facts are confirmed.
+
+## First physical command result
+
+The guarded command was run once on the Pi at `192.168.0.245` with GPIO18,
+closed angle 0 degrees, open angle 90 degrees, and 0.5 seconds settling. The
+runtime returned:
+
+```json
+{"closed": true, "safe_stop": true}
+```
+
+This confirms the PWM command completed and stopped safely. The developer's
+physical observation of the gate travel must be recorded before M7 is marked
+fully complete.
