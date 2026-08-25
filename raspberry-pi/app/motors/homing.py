@@ -20,6 +20,14 @@ class HomingStepper(Protocol):
         """Move a bounded number of steps and return with the driver disabled."""
 
 
+def _move_one_step_and_check(stepper: HomingStepper, sensor: HomeSensor, direction: int) -> bool:
+    observed = getattr(stepper, "move_step_observed", None)
+    if callable(observed):
+        return bool(observed(direction, sensor.is_home))
+    stepper.move_steps(1, direction)
+    return sensor.is_home()
+
+
 class HomingError(RuntimeError):
     """Raised when the home reference is not found within the safety bound."""
 
@@ -40,9 +48,9 @@ def home_stepper(
 ) -> HomingResult:
     """Move one step at a time until the active-high home input is reached.
 
-    The sensor is sampled before motion and after every pulse.  ``max_steps``
-    is a hard travel bound (two revolutions at 200 full steps/revolution by
-    default), and ``HomingError`` indicates that the reference was not found.
+    The sensor is sampled before motion and during each pulse. ``max_steps``
+    is a hard travel bound independent of the motor's effective steps per
+    revolution, and ``HomingError`` indicates that the reference was not found.
     """
 
     if direction not in (0, 1):
@@ -54,8 +62,7 @@ def home_stepper(
         return HomingResult(reached_home=True, steps_taken=0, already_home=True)
 
     for steps_taken in range(1, max_steps + 1):
-        stepper.move_steps(1, direction)
-        if sensor.is_home():
+        if _move_one_step_and_check(stepper, sensor, direction):
             return HomingResult(
                 reached_home=True,
                 steps_taken=steps_taken,
@@ -94,8 +101,7 @@ def home_stepper_for_seconds(
     for steps_taken in range(1, max_steps + 1):
         if monotonic() >= deadline:
             break
-        stepper.move_steps(1, direction)
-        if sensor.is_home():
+        if _move_one_step_and_check(stepper, sensor, direction):
             return HomingResult(
                 reached_home=True,
                 steps_taken=steps_taken,

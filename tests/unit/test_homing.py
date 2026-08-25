@@ -67,6 +67,19 @@ class HomingTests(unittest.TestCase):
                 FakeStepper(), MockHomeSensor([False]), seconds=1, max_steps=2
             )
 
+    def test_observed_step_can_latch_a_brief_home_edge(self) -> None:
+        class ObservedStepper(FakeStepper):
+            def move_step_observed(self, direction, sample) -> bool:
+                self.moves.append((1, direction))
+                return sample()
+
+        stepper = ObservedStepper()
+        result = home_stepper(
+            stepper, MockHomeSensor([False, True]), direction=1, max_steps=3
+        )
+        self.assertTrue(result.reached_home)
+        self.assertEqual(result.steps_taken, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

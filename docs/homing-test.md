@@ -87,6 +87,11 @@ This rules out only the earlier 100/200-step bound; it does not prove the
 effective mechanical revolution count. Inspect the IR signal path and home
 marker before any further actuator test.
 
+The homing adapter now samples GPIO23 approximately every millisecond during
+both phases of each STEP pulse and latches a HIGH edge, instead of reading only
+once after a complete step. This handles a brief IR assertion as the marker
+passes the sensor while retaining the time and step bounds.
+
 ## Timed calibration search
 
 For mechanical calibration only, `motors.timed_home_test` provides a hard

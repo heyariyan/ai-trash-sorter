@@ -6,6 +6,7 @@ the first physical test can be bounded and disabled safely.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from time import monotonic, sleep
 
 
@@ -99,6 +100,47 @@ class LgpioStepper:
                 gpio.gpio_write(handle, self.step_gpio, 0)
                 sleep(self.pulse_delay_seconds)
         finally:
+            self.disable()
+
+    def move_step_observed(
+        self,
+        direction: int,
+        sample: Callable[[], bool],
+        sample_interval_seconds: float = 0.001,
+    ) -> bool:
+        """Pulse one step while sampling a stop sensor during both phases."""
+
+        gpio, handle = self._require_started()
+        if direction not in (0, 1):
+            raise ValueError("direction must be 0 or 1")
+        if sample_interval_seconds <= 0:
+            raise ValueError("sample_interval_seconds must be positive")
+        gpio.gpio_write(handle, self.direction_gpio, direction)
+        gpio.gpio_write(handle, self.reset_gpio, 1)
+        gpio.gpio_write(handle, self.sleep_gpio, 1)
+        sleep(0.01)
+        self.enable()
+
+        def sample_window(duration: float) -> bool:
+            deadline = monotonic() + duration
+            while monotonic() < deadline:
+                if sample():
+                    return True
+                remaining = deadline - monotonic()
+                if remaining > 0:
+                    sleep(min(sample_interval_seconds, remaining))
+            return bool(sample())
+
+        home_seen = False
+        try:
+            gpio.gpio_write(handle, self.step_gpio, 1)
+            home_seen = sample_window(self.pulse_delay_seconds)
+            gpio.gpio_write(handle, self.step_gpio, 0)
+            if not home_seen:
+                home_seen = sample_window(self.pulse_delay_seconds)
+            return home_seen
+        finally:
+            gpio.gpio_write(handle, self.step_gpio, 0)
             self.disable()
 
     def move_for_seconds(self, seconds: float, direction: int = 0) -> int:

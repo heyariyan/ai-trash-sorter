@@ -25,3 +25,4 @@ All notable project changes are documented here.
 - Recorded the developer's successful follow-up stepper movement report and added bounded GPIO23 IR-home sensing/homing policy with simulation tests.
 - Added calibrated four-stop bin positioning with shortest-path rotation and tests; servo drop sequencing remains in M7.
 - Added a dual-bounded timed IR-home calibration command (deadline plus step ceiling); no unlimited actuator loop is permitted.
+- Improved homing edge capture by sampling GPIO23 during each STEP pulse and latching brief HIGH assertions.
