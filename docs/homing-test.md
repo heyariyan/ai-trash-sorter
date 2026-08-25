@@ -58,3 +58,17 @@ additional movement was attempted. Before retrying, verify the mechanical
 direction toward the sensor, the sensor's physical alignment/clearance, and
 GPIO23 wiring/polarity. Increase the travel bound only after those checks;
 never bypass the bound.
+
+## Slow one-revolution scan
+
+At the developer's request, a second bounded test used 200 full steps in
+`direction=0` with a 50 ms pulse delay (one nominal 360-degree revolution at
+the configured full-step setting). GPIO23 never became HIGH:
+
+```json
+{"error": "home not detected within 200 steps", "safe_off": true}
+```
+
+The driver disabled safely. Do not keep repeating motor scans. Inspect the IR
+module alignment/marker, its 3.3 V supply and ground, and GPIO23 continuity;
+then perform a sensor-only level test before authorizing another movement.
