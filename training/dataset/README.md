@@ -22,6 +22,12 @@ The dataset contains nine source folders. They do not map one-to-one to this app
 
 TACO follows the same policy: all paper/cardboard/organic classes map to `BIODEGRADABLE`, all plastic classes map to `PLASTIC`, all metal classes map to `METAL`, and only unknown/unhandled classes map to `OTHER`. The merger is [training/dataset/merge_taco_kaggle.py](merge_taco_kaggle.py).
 
+TACO's dataset terms must be reviewed per source image; the project records the
+dataset attribution and CC BY 4.0 notice, but does not redistribute raw images
+in Git. The official TACO toolkit is separately MIT-licensed. The bounded
+downloader [download_taco_subset.py](download_taco_subset.py) preserves the
+source annotations and selects a reproducible maximum per target class.
+
 Important: TACO contains a much larger taxonomy than the merger's initial 16-name table. The full TACO category list and per-image source licenses must be audited before using a merged manifest for training or redistribution. The toolkit and dataset terms must be kept distinct; retain the original TACO attribution and image URLs from its annotations.
 
 This is a bootstrap dataset, not domain-complete training data. Pi feedback images and owner-reviewed corrections take priority in later rounds.

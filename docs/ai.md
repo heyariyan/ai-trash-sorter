@@ -2,6 +2,10 @@
 
 Status: **Neural training/export pipeline implemented; a production model is not declared until training and Pi benchmarking complete.**
 
+The first measured run is recorded in [model-evaluation.md](model-evaluation.md):
+80.55% held-out accuracy and a Pi test deployment. One owner-confirmed plastic
+sample was misclassified as `OTHER`, so deployment remains test-only.
+
 ## Material policy
 
 The classifier has exactly four current outputs:

@@ -357,14 +357,14 @@ def main() -> int:
     
     # Process TACO
     if args.taco_root and not args.kaggle_only:
-        print(f"\n📦 Processing TACO dataset from {args.taco_root}...")
+        print(f"\nProcessing TACO dataset from {args.taco_root}...")
         taco_counts = process_taco_images(args.taco_root, args.output, args.max_per_class)
         for label, count in taco_counts.items():
             all_counts[label] += count
     
     # Process Kaggle (append to TACO)
     if args.kaggle_root and not args.taco_only:
-        print(f"\n📦 Processing Kaggle dataset from {args.kaggle_root}...")
+        print(f"\nProcessing Kaggle dataset from {args.kaggle_root}...")
         kaggle_counts = process_kaggle_images(
             args.kaggle_root, args.output, args.max_per_class, dict(all_counts)
         )
@@ -373,7 +373,7 @@ def main() -> int:
     
     # Summary
     print("\n" + "="*60)
-    print("📊 MERGED DATASET SUMMARY")
+    print("MERGED DATASET SUMMARY")
     print("="*60)
     total = sum(all_counts.values())
     for label in sorted(all_counts.keys()):
@@ -382,7 +382,7 @@ def main() -> int:
         print(f"  {label:20} {count:5} images ({pct:5.1f}%)")
     print(f"  {'TOTAL':20} {total:5} images")
     print("="*60)
-    print(f"\n✅ Manifest written to: {args.output}")
+    print(f"\nManifest written to: {args.output}")
     print(f"   Next: Use this manifest for training/splits\n")
     
     return 0

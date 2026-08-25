@@ -18,3 +18,4 @@ All notable project changes are documented here.
 - Updated planning for TACO+Kaggle material mapping, two ultrasonic roles (U1 intake and U2 post-drop status), and active-low IR homing.
 - Hardened TACO category remapping for plastic/metal/paper variants and added mapping tests.
 - Added quantized TFLite inference with injectable interpreter tests and removed the former RGB runtime path.
+- Added bounded TACO subset download, merged 4,831-image neural training run, and Pi test evaluation; one confirmed plastic sample remains misclassified and production deployment is blocked pending feedback retraining.
