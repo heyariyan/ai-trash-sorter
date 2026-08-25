@@ -6,7 +6,7 @@ the first physical test can be bounded and disabled safely.
 
 from __future__ import annotations
 
-from time import sleep
+from time import monotonic, sleep
 
 
 class StepperError(RuntimeError):
@@ -100,6 +100,31 @@ class LgpioStepper:
                 sleep(self.pulse_delay_seconds)
         finally:
             self.disable()
+
+    def move_for_seconds(self, seconds: float, direction: int = 0) -> int:
+        """Pulse continuously for a bounded duration and return pulse count."""
+        gpio, handle = self._require_started()
+        if seconds <= 0:
+            raise ValueError("seconds must be positive")
+        if direction not in (0, 1):
+            raise ValueError("direction must be 0 or 1")
+        gpio.gpio_write(handle, self.direction_gpio, direction)
+        gpio.gpio_write(handle, self.reset_gpio, 1)
+        gpio.gpio_write(handle, self.sleep_gpio, 1)
+        sleep(0.01)
+        self.enable()
+        deadline = monotonic() + seconds
+        pulses = 0
+        try:
+            while monotonic() < deadline:
+                gpio.gpio_write(handle, self.step_gpio, 1)
+                sleep(self.pulse_delay_seconds)
+                gpio.gpio_write(handle, self.step_gpio, 0)
+                sleep(self.pulse_delay_seconds)
+                pulses += 1
+        finally:
+            self.disable()
+        return pulses
 
     def close(self) -> None:
         if self._gpio is None or self._handle is None:
