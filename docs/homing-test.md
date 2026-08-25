@@ -92,6 +92,19 @@ both phases of each STEP pulse and latches a HIGH edge, instead of reading only
 once after a complete step. This handles a brief IR assertion as the marker
 passes the sensor while retaining the time and step bounds.
 
+## Successful edge-latched test
+
+After deploying the edge-sampling fix to the Pi at `192.168.0.245`, the same
+bounded command detected the brief home assertion:
+
+```json
+{"already_home": false, "direction": 0, "elapsed_ms": 16975.977, "home_gpio": 23, "reached_home": true, "safe_off": true, "steps_taken": 153}
+```
+
+The motor stopped at the detected home edge and the driver was disabled. The
+153-step travel is a measured homing result, not yet a calibrated full-
+revolution value.
+
 ## Timed calibration search
 
 For mechanical calibration only, `motors.timed_home_test` provides a hard
