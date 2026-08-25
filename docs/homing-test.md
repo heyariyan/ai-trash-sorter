@@ -1,6 +1,6 @@
 # M6 IR homing
 
-Status: **Software and simulation complete; physical homing verification is pending.**
+Status: **M6 complete; physical homing verified with GPIO23 edge capture.**
 
 The installed IR module is connected to BCM GPIO23 and has measured active-high
 semantics:
