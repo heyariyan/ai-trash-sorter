@@ -6,6 +6,10 @@ Status: **Simulation and debounced detector implemented; U1 GPIO wiring remains 
 
 U1 is the fixed ultrasonic sensor at the insertion chute. It detects that an item is present and triggers the later camera workflow. U2 is reserved for the post-drop bin-status measurement and is not part of this trigger detector.
 
+The active-low IR home sensor is a separate mechanical reference (HIGH = not
+home, LOW = 0° home). It is not used as an object trigger and is intentionally
+not coupled to this detector.
+
 ## Software boundary
 
 `ObjectPresenceDetector` consumes the `UltrasonicSensor` interface and returns a debounced `PresenceReading`. It contains no GPIO, camera, motor, servo, network, or database code.

@@ -40,3 +40,13 @@ For the merged plan, supply a local TACO checkout containing `annotations.json` 
 ```text
 uv run --python 3.12 --no-project python training/dataset/merge_taco_kaggle.py --taco-root <taco-root> --kaggle-root <downloaded-path> --output training/dataset/manifests/taco-kaggle.jsonl
 ```
+
+Then train the neural model on the development machine (never on the Pi):
+
+```text
+python training/scripts/train_neural.py --manifest training/dataset/manifests/taco-kaggle.jsonl --output training/models/waste-mobilenet-v1.tflite --model-version waste-mobilenet-v1 --dataset-version taco-plus-kaggle-reviewed-v1
+```
+
+The merger resets its output before writing and enforces the per-class cap
+across both sources. Review mixed-image `OTHER` rows and all source licenses
+before using the resulting model.

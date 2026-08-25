@@ -1,2 +1,5 @@
 # Install on the Pi using the OS package where possible.
 Pillow>=10.0
+numpy>=1.24
+# Select a wheel compatible with the Pi OS/Python architecture.
+tflite-runtime>=2.14

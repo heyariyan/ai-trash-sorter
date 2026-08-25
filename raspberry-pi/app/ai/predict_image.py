@@ -7,7 +7,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from .inference import RgbCentroidModel
+from .inference import TFLiteModel
 
 
 def main() -> int:
@@ -15,7 +15,7 @@ def main() -> int:
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--image", type=Path, required=True)
     args = parser.parse_args()
-    prediction = RgbCentroidModel(args.model).predict(args.image)
+    prediction = TFLiteModel(args.model).predict(args.image)
     print(f"{prediction.category} — {prediction.confidence * 100:.2f}%")
     print(json.dumps(asdict(prediction), sort_keys=True))
     return 0

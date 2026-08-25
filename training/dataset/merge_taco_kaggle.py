@@ -1,7 +1,7 @@
-"""Merge TACO (16 classes) and Kaggle (9 classes) datasets into unified 4-class manifest.
+"""Merge TACO (full taxonomy) and Kaggle datasets into a unified manifest.
 
 This script:
-1. Downloads/uses TACO dataset (16 waste categories with segmentation masks)
+1. Uses a local TACO checkout (the published taxonomy is larger than 16 categories)
 2. Uses existing Kaggle bootstrap data
 3. Remaps both to 4 unified classes: BIODEGRADABLE, PLASTIC, METAL, OTHER
 4. Creates a combined JSONL manifest suitable for training
@@ -20,10 +20,11 @@ from pathlib import Path
 
 
 # ============================================================================
-# TACO 16-CLASS TAXONOMY → 4-CLASS REMAPPING
+# TACO seed taxonomy → 4-class remapping
 # ============================================================================
-# TACO provides hierarchical categories with segmentation masks in annotations.json
-# We map each of the 16 classes to our 4-class system.
+# TACO provides hierarchical categories with segmentation masks in annotations.json.
+# The published taxonomy is larger than this seed table; fallback rules below
+# cover material variants and unknown classes remain OTHER for review.
 
 TACO_TO_4CLASS = {
     # PLASTIC (TACO IDs: 1-7)
@@ -45,7 +46,7 @@ TACO_TO_4CLASS = {
     "Cardboard": "BIODEGRADABLE",  # Cardboard degrades, repurposable
     "Food waste": "BIODEGRADABLE",
     
-    # OTHER (TACO IDs: 14-16 + unlabeled)
+    # OTHER (unsupported, mixed, or unknown material)
     "Textile": "OTHER",
     "Rubber": "OTHER",
     "Glass": "OTHER",  # Not part of current 4-class, but in TACO
@@ -92,7 +93,7 @@ def remap_taco_category(category: str) -> str:
     return "OTHER"
 
 # ============================================================================
-# KAGGLE 9-CLASS TAXONOMY → 4-CLASS REMAPPING (from existing remap_labels.py)
+# KAGGLE SOURCE-FOLDER TAXONOMY → 4-CLASS REMAPPING
 # ============================================================================
 
 KAGGLE_TO_4CLASS = {
@@ -189,11 +190,13 @@ def process_taco_images(
             if not annotations:
                 continue
             
-            # Use primary (first) annotation
-            ann = annotations[0]
-            taco_class = ann["category"]
-            target_class = remap_taco_category(taco_class)
-            img_path = ann["path"]
+            categories_for_image = sorted({ann["category"] for ann in annotations})
+            mapped_classes = {remap_taco_category(category) for category in categories_for_image}
+            # Image-level classification cannot safely choose one material when
+            # annotations disagree; retain it as OTHER and preserve categories.
+            target_class = mapped_classes.pop() if len(mapped_classes) == 1 else "OTHER"
+            taco_class = categories_for_image[0]
+            img_path = annotations[0]["path"]
             
             # Enforce per-class limit
             if counts[target_class] >= max_per_class:
@@ -208,6 +211,7 @@ def process_taco_images(
             row = {
                 "path": img_path,
                 "source_label": taco_class,
+                "source_categories": categories_for_image,
                 "label": target_class,
                 "source": "taco",
             }
@@ -248,6 +252,7 @@ def process_kaggle_images(
     kaggle_root: Path,
     output: Path,
     max_per_class: int = 250,
+    initial_counts: dict[str, int] | None = None,
 ) -> dict[str, int]:
     """
     Process Kaggle dataset and append to existing manifest.
@@ -260,6 +265,7 @@ def process_kaggle_images(
     
     IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
     counts: dict[str, int] = defaultdict(int)
+    available = defaultdict(int, initial_counts or {})
     written = 0
     skipped = 0
     
@@ -280,7 +286,7 @@ def process_kaggle_images(
             target_label = KAGGLE_TO_4CLASS[_normalise(source_label)]
             
             # Enforce per-class limit
-            if counts[target_label] >= max_per_class:
+            if available[target_label] >= max_per_class:
                 skipped += 1
                 continue
             
@@ -292,6 +298,7 @@ def process_kaggle_images(
             }
             manifest.write(json.dumps(row, sort_keys=True) + "\n")
             counts[target_label] += 1
+            available[target_label] += 1
             written += 1
     
     print(f"Kaggle: Processed {written} images (skipped {skipped})")
@@ -341,6 +348,10 @@ def main() -> int:
     )
     
     args = parser.parse_args()
+
+    # A merge is reproducible: never silently append to a stale prior manifest.
+    if args.output.exists():
+        args.output.unlink()
     
     all_counts: dict[str, int] = defaultdict(int)
     
@@ -354,7 +365,9 @@ def main() -> int:
     # Process Kaggle (append to TACO)
     if args.kaggle_root and not args.taco_only:
         print(f"\n📦 Processing Kaggle dataset from {args.kaggle_root}...")
-        kaggle_counts = process_kaggle_images(args.kaggle_root, args.output, args.max_per_class)
+        kaggle_counts = process_kaggle_images(
+            args.kaggle_root, args.output, args.max_per_class, dict(all_counts)
+        )
         for label, count in kaggle_counts.items():
             all_counts[label] += count
     

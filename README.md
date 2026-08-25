@@ -6,7 +6,13 @@ The physical sorting loop is designed to work entirely offline. Remote access an
 
 ## Project status
 
-Milestones M0 and M1 documentation are complete. M2 camera capture and real Pi verification are complete. M3 v0 baseline training and temporary Pi inference are complete; M4 simulation presence detection is implemented. The baseline is not production quality, and no motor-control code or physical actuator test has been created or performed.
+M0 repository audit is complete. M1 hardware documentation and the provisional
+GPIO plan are complete, with electrical validation still required. M2 camera
+capture and real Pi verification are complete. M3 now uses a MobileNetV2 neural
+training/export path and quantized TFLite runtime; a production model awaits
+training and measured Pi evaluation. M4 U1 presence detection is implemented
+in simulation. No motor-control code or physical actuator test has been
+created or performed.
 
 ## Safety
 

@@ -1,50 +1,67 @@
-# M3 visual AI baseline
+# M3 visual AI
 
-Status: **M3 v0 verified; remapping policy changed and the baseline must be retrained before use.**
+Status: **Neural training/export pipeline implemented; a production model is not declared until training and Pi benchmarking complete.**
 
-## Dataset
+## Material policy
 
-The development machine downloaded Kaggle dataset version 1 for `adithyachalla/waste-classification` with `kagglehub`. Kaggle lists the dataset as Apache 2.0 and describes nine source folders. The explicit remapping is recorded in [training/dataset/README.md](../training/dataset/README.md).
+The classifier has exactly four current outputs:
 
-The previous Kaggle-only manifest contained 4,752 images. That manifest and its model used an older mapping in which paper/cardboard were `OTHER`; those metrics are retained for history but are invalid for the new policy.
-
-The new merged training plan is:
-
-| Source material | Project class |
-| --- | ---: |
-| Organic, vegetation, paper, cardboard | BIODEGRADABLE |
-| Plastic items, bottles, caps, containers | PLASTIC |
-| Metal items, cans, caps, containers | METAL |
-| Unknown, mixed, or unsupported material | OTHER |
-
-Raw images and generated manifests remain outside Git.
-
-## Baseline model
-
-The M3 baseline is a deliberately transparent RGB-centroid classifier. It resizes images to 8x8 RGB pixels, computes one centroid per class, and selects the nearest centroid. It is not the final quantized neural model and must not be presented as production accuracy. It must be retrained after the TACO+Kaggle merge and corrected material mapping.
-
-| Field | Value |
+| Material policy | Project class |
 | --- | --- |
-| Model version | `baseline-rgb-centroid-v0` |
-| Training samples | 800 |
-| Holdout samples | 200 |
-| Holdout accuracy | 0.515 |
-| Input | 8x8 RGB |
-| Quantization | None; float JSON baseline |
-| Deployment status | Temporary Pi verification only; not production-deployed |
+| Organic waste, vegetation, paper, cardboard, cartons | `BIODEGRADABLE` |
+| Plastic bottles, caps, containers, wrappers, film, utensils | `PLASTIC` |
+| Metal cans, caps, foil, containers, aluminium, steel | `METAL` |
+| Unknown, mixed, unsupported, glass, textile, rubber | `OTHER` |
 
-The old baseline's local sample and Pi checks remain historical evidence only. New evaluation must use the corrected merged manifest and owner-reviewed material labels.
+This mapping is explicit in `training/dataset/remap_labels.py` and
+`training/dataset/merge_taco_kaggle.py`. TACO images with multiple conflicting
+material annotations are conservatively marked `OTHER` for image-level
+classification; the source categories remain in the manifest for review.
 
-## Runtime path
+## Dataset and training
 
-`raspberry-pi/app/ai/inference.py` loads the same JSON format and returns `category`, `confidence`, `model_version`, `inference_time_ms`, and `timestamp`. It performs no GPIO, motor, servo, network, or database work.
+1. Download Kaggle on the development machine with `download_kaggle.py`.
+2. Supply a local TACO checkout to `merge_taco_kaggle.py`.
+3. Review the generated JSONL manifest and source licenses before training.
+4. Train with `training/scripts/train_neural.py`.
 
-The baseline was copied temporarily to `/tmp` on the Pi and run against `/home/ariyan/Pictures/ai-trash-sorter-20260824-155418.jpg`. It returned `OTHER` with a 0.318736 score and measured `inference_time_ms=316.986`. The temporary model, module, and runner were removed after the test; no permanent model or code was installed.
+The training script uses a MobileNetV2 transfer-learning model, image
+augmentation, stratified train/validation/test splits, class weighting, early
+stopping, and optional fine-tuning. It exports a full-integer quantized TFLite
+model plus a JSON sidecar. It does not use RGB centroids, color averages, or
+any other non-neural classifier.
 
-## Next work
+Example (development machine only):
 
-1. Audit and extend the TACO category mapping beyond the initial 16-name table.
-2. Merge TACO and Kaggle with the corrected four-class policy, then retrain and evaluate.
-3. Replace the RGB-centroid baseline with a small image model suitable for TFLite/quantized deployment.
-4. Evaluate on owner-reviewed Pi images before any deployment approval.
-5. Continue M4 object detection using U1, without coupling it to motor movement.
+```text
+python training/scripts/train_neural.py \
+  --manifest training/dataset/manifests/taco-kaggle.jsonl \
+  --output training/models/waste-mobilenet-v1.tflite \
+  --model-version waste-mobilenet-v1 \
+  --dataset-version taco-plus-kaggle-reviewed-v1
+```
+
+`--weights imagenet` is the default for transfer learning. Use `--weights
+none` only when the training machine must remain offline. The raw dataset,
+manifest, checkpoints, and model binaries are ignored by Git.
+
+## Pi runtime
+
+`raspberry-pi/app/ai/inference.py` loads the TFLite model and its JSON sidecar,
+preprocesses the image, handles float or quantized I/O, and returns:
+
+`category`, `confidence`, `model_version`, `inference_time_ms`, `timestamp`.
+
+The Pi needs a compatible `tflite-runtime` or `ai-edge-litert` wheel and NumPy;
+the correct choice depends on the Pi OS architecture and Python version. The
+model is loaded once and reused; network calls and model retraining are outside
+the sorting loop. A model is not deployed until its sidecar records metrics,
+input size, quantization, dataset version, and owner approval.
+
+## Measurement gate
+
+For every candidate model record test accuracy, per-class precision/recall,
+confusion matrix, model size, cold-load time, and repeated Pi inference times.
+Only measured values may be reported. Feedback from the Pi is human-reviewed
+before it enters a later training round; there is no automatic retraining or
+redeployment.

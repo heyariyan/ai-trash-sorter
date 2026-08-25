@@ -1,53 +1,46 @@
 # Current state — M0 environment and repository audit
 
-Audited on 2026-08-24 (Asia/Kolkata) from the developer PC workspace.
+Audited on 2026-08-25 (Asia/Kolkata) from the developer PC workspace.
 
 ## Repository
 
 - Workspace: `C:\Users\ariya\Desktop\Novi`
-- Starting state: empty directory; it was not a Git repository.
-- Git repository: initialized locally on branch `main`.
-- Git remote: none configured, so no GitHub push is possible yet.
-- Existing Git identity: `heyariyan <thisisariyanhaque@gmail.com>`.
-- No existing project code was found or overwritten.
+- Git branch: `main`
+- Remote: `origin` → `https://github.com/heyariyan/ai-trash-sorter.git`
+- Synchronization at this audit: local `main` equals `origin/main`; no uncommitted changes before this M0–M4 pass.
+- Latest synchronized commit before this pass: `d3484b2 feat(ai): update material and sensor plan`.
+- No force-push or destructive repository operation is permitted.
 
 ## Developer PC
 
 | Capability | Result |
 | --- | --- |
-| Git | Installed: `2.52.0.windows.1` |
-| VS Code | Installed and on `PATH` |
-| Flutter / Dart | Installed on `PATH`; detailed version/doctor check did not complete during this audit |
-| Python | `python` resolves to a Windows Store alias but cannot execute; a real Python installation is required for training and Pi tooling |
-| Java / Android `adb` | Not found on `PATH`; Android toolchain remains unverified |
-| Chrome | Not verified on `PATH` |
-| GitHub CLI | Not found |
+| Git | Installed and authenticated to the configured GitHub remote |
+| Python | `uv` can provide a managed Python 3.12 environment for tests and tooling |
+| Pillow / NumPy | Available through the test environment; required by camera/inference tooling |
+| TensorFlow | Required on the training machine for M3 neural training; installation is checked by `train_neural.py` |
+| Flutter / Android / Chrome | Outside M0–M4 scope; verify before the mobile milestone |
 
 ## Raspberry Pi
 
-No Pi hostname, IP address, SSH configuration, or physical connection was supplied. The Pi OS, Python version, camera availability, storage, and network configuration are therefore unverified.
+The connected Pi is a Raspberry Pi 3B+ running the camera capture path. The OV5647 camera was verified remotely over SSH with a real capture. Pi-side TFLite runtime availability and the final Python package versions must be checked before neural deployment; no actuator was moved.
 
-## Hardware
+## Confirmed hardware and revised roles
 
-The developer confirmed a Raspberry Pi 3B+, Raspberry Pi Camera, two ultrasonic sensors, MG995 servo, NEMA17 stepper, DRV8825 stepper driver, an IR home sensor, four touch switches, and an OLED. The ultrasonic, IR, touch, and OLED module variants and electrical levels are still unverified. GPIO code must not be written until those details and wiring are checked.
+- Raspberry Pi Camera: M2 capture-only path verified.
+- U1 ultrasonic: fixed intake/object-presence sensor and the only camera trigger.
+- U2 ultrasonic: fixed post-drop bin-status sensor; sampled only after gate close and settling.
+- IR home sensor: active-low semantics; HIGH = normal, LOW = 0° home.
+- NEMA17 + DRV8825, MG995 gate servo, four touch switches, and OLED are planned runtime hardware. Exact electrical levels, OLED controller/interface, power supplies, and emergency cut-off remain validation gates before GPIO drivers or actuator tests.
 
-## Planned repository and deployment boundaries
+## Milestone status
 
-The project will be built incrementally toward this layout:
+| Milestone | Status | Evidence |
+| --- | --- | --- |
+| M0 | Complete | This audit and repository boundary |
+| M1 | Documentation complete; electrical verification pending | Hardware, wiring, and provisional BCM map |
+| M2 | Complete | Warm camera abstraction, mock tests, and real Pi capture record |
+| M3 | Neural pipeline implemented; training/deployment pending | TACO+Kaggle manifest tooling and MobileNetV2→int8 TFLite exporter |
+| M4 | Simulation complete; GPIO validation pending | U1 debounced detector and tests |
 
-```text
-raspberry-pi/       Pi runtime subset: app, provisioning, model, config, services
-mobile/flutter_app/ Companion client only; never runs sorting logic
-pocketbase/         Schemas, migrations, and hooks only; no live database data
-cloudflare/         Tunnel templates and documentation only
-training/           Developer-machine-only dataset tooling and experiments
-tests/              Unit and integration tests
-scripts/            Pi deployment, backup, restore, and diagnostics scripts
-docs/               Architecture, hardware, setup, testing, and operations documentation
-```
-
-The deployed Pi will eventually use `/opt/ai-trash-sorter/` for application files, `/var/lib/ai-trash-sorter/` for runtime data, and `/etc/ai-trash-sorter/` for device configuration and secrets. These paths have not been created or modified.
-
-## M0 outcome
-
-M0 is complete. M1 documentation, a provisional BCM GPIO map, and the fixed-sensor/bin-position mapping design have been added. M2 capture-only camera code is present with a Picamera2 adapter and deterministic mock, and the real OV5647 camera was verified on the Pi. M3 v0 contains a dataset bootstrap/remapper, transparent baseline, and offline inference path; the new TACO+Kaggle mapping requires retraining. M4 contains a hardware-independent U1 presence detector and simulation tests. Hardware planning now uses two ultrasonic sensors and an active-low IR home sensor; electrical details remain to be validated before GPIO drivers or actuators are used.
+The former RGB-centroid model is retired and is not a supported training or runtime path. No model accuracy or Pi inference latency is claimed until the neural model is trained and measured on the merged, owner-reviewed data.

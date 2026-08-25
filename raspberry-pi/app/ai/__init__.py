@@ -1,5 +1,5 @@
 """Offline visual inference interfaces."""
 
-from .inference import InferenceError, Prediction, RgbCentroidModel
+from .inference import InferenceError, Prediction, TFLiteModel
 
-__all__ = ["InferenceError", "Prediction", "RgbCentroidModel"]
+__all__ = ["InferenceError", "Prediction", "TFLiteModel"]
