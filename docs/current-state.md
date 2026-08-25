@@ -30,8 +30,8 @@ The connected Pi is a Raspberry Pi 3B+ running the camera capture path. The OV56
 - Raspberry Pi Camera: M2 capture-only path verified.
 - U1 ultrasonic: fixed intake/object-presence sensor and the only camera trigger.
 - U2 ultrasonic: fixed post-drop bin-status sensor; sampled only after gate close and settling.
-- IR home sensor: active-low semantics; HIGH = normal, LOW = 0° home.
-- NEMA17 + DRV8825, MG995 gate servo, four touch switches, and OLED are planned runtime hardware. Exact electrical levels, OLED controller/interface, power supplies, and emergency cut-off remain validation gates before GPIO drivers or actuator tests.
+- IR home sensor: active-high semantics; GPIO23 HIGH (3.3 V) = 0° home, LOW = away from home.
+- NEMA17 + DRV8825 stepper control and GPIO23 IR home input are verified for their current milestones. MG995 gate servo, four touch switches, and OLED remain planned runtime hardware; their own electrical details and interfaces must be verified before those drivers are added.
 
 ## Milestone status
 
@@ -42,6 +42,7 @@ The connected Pi is a Raspberry Pi 3B+ running the camera capture path. The OV56
 | M2 | Complete | Warm camera abstraction, mock tests, and real Pi capture record |
 | M3 | Neural model trained; test deployment only | 80.55% held-out accuracy; Pi evaluation in [model-evaluation.md](model-evaluation.md) |
 | M4 | Simulation complete; GPIO validation pending | U1 debounced detector and tests |
-| M5 | Initial authorized movement completed; physical confirmation pending | [stepper-test.md](stepper-test.md) |
+| M5 | Complete; developer reports successful stepper movement after the initial stall diagnosis | [stepper-test.md](stepper-test.md) |
+| M6 | Software/simulation complete; bounded physical homing verification pending | [homing-test.md](homing-test.md) |
 
 The former RGB-centroid model is retired and is not a supported training or runtime path. No model accuracy or Pi inference latency is claimed until the neural model is trained and measured on the merged, owner-reviewed data.

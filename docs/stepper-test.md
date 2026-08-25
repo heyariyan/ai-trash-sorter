@@ -1,18 +1,18 @@
 # M5 DRV8825 stepper test
 
-Status: **Movement attempted; motor stalled/vibrated and further tests are paused.**
+Status: **M5 complete; the developer subsequently reports that the stepper movement worked.**
 
 ## Preflight confirmation
 
 - DRV8825 carrier verified.
 - VMOT: 12 V.
-- Current limit: 1.5 A.
+- Current limit: approximately 1.26 A from VREF 0.63 V (carrier formula and motor rating remain the source of truth).
 - Pi/driver common ground: verified.
 - NEMA17 coil pairs: verified.
 - STEP/DIR/ENABLE/RESET/SLEEP BCM wiring: verified.
 - Mechanical limits and emergency cutoff: verified by developer.
 - Servo power: isolated.
-- IR home sensor: intentionally not used in M5; reserved for M6 homing.
+- IR home sensor: intentionally not used in M5; GPIO23 active-high home input is covered by M6.
 
 ## Test performed
 
@@ -51,11 +51,13 @@ bounded duration command was run once on the Pi:
 This records the GPIO/software result only; physical motion and thermal
 behavior still require the developer's observation.
 
-## Physical result and stop condition
+## Initial physical result and stop condition
 
 Developer observation: the shaft moved a small amount and then vibrated. No
 heating, binding, or unexpected travel was reported. This is treated as a
-failed motion test; do not repeat it until the following are checked:
+failed initial motion test. The developer subsequently reports that the
+stepper movement worked after the wiring/current adjustment. No additional
+performance or travel measurement is claimed here:
 
 1. With motor power off, measure one low-resistance coil between A1–A2 and the
    other between B1–B2; there must be no cross-coil continuity.
@@ -63,5 +65,8 @@ failed motion test; do not repeat it until the following are checked:
    current and verify the 12 V supply does not sag under enable.
 3. Verify the mechanism turns freely and add a VMOT bulk capacitor at the
    carrier if the board documentation requires one.
-4. Use a slower start and acceleration ramp; the current test applies about
+4. Use a slower start and acceleration ramp; the initial test applied about
    100 full-step pulses/second immediately, which can stall a loaded motor.
+
+The successful follow-up was reported by the developer; its exact command,
+travel, and measured timing were not recorded in this repository.
