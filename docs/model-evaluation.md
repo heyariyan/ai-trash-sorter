@@ -43,3 +43,17 @@ sidecar, and inference runtime were copied to
 The can result is correct. The confirmed plastic result is incorrect, so this
 model is functional but not yet production-accurate. The plastic image must be
 added to the owner-reviewed feedback set before the next training round.
+
+## Live camera smoke test
+
+The repository `camera.capture_once` path was copied to the Pi test directory
+and used without starting any actuator. It captured
+`/home/ariyan/Pictures/ai-trash-sorter-live.jpg` at 640 × 480 in **108.032 ms**.
+The same deployed model then returned:
+
+| Prediction | Confidence | Inference time |
+| --- | ---: | ---: |
+| `PLASTIC` | 92.19% | 311.193 ms |
+
+This is a successful camera-to-neural-runtime smoke test, not an accuracy
+measurement because the live object's ground-truth label was not recorded.
