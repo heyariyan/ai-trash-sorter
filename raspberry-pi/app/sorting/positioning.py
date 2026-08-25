@@ -122,7 +122,11 @@ class SorterPositionController:
 
         plan = self.plan_for(category)
         if plan.steps:
-            self.stepper.move_steps(plan.steps, plan.direction)
+            try:
+                self.stepper.move_steps(plan.steps, plan.direction)
+            except Exception:
+                self.invalidate_position()
+                raise
         self.current_stop = plan.target_stop
         return plan
 

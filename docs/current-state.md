@@ -45,5 +45,6 @@ The connected Pi is a Raspberry Pi 3B+ running the camera capture path. The OV56
 | M5 | Complete; developer reports successful stepper movement after the initial stall diagnosis | [stepper-test.md](stepper-test.md) |
 | M6 | Complete; GPIO23 edge-latched homing verified on the Pi | [homing-test.md](homing-test.md), [bin-positioning.md](bin-positioning.md) |
 | M7 | Complete; developer verified reversed 0-degree/90-degree servo gate travel | [servo-gate.md](servo-gate.md) |
+| M8 | Software/simulation complete; combined physical cycle pending explicit confirmation | [local-cycle.md](local-cycle.md) |
 
 The former RGB-centroid model is retired and is not a supported training or runtime path. No model accuracy or Pi inference latency is claimed until the neural model is trained and measured on the merged, owner-reviewed data.

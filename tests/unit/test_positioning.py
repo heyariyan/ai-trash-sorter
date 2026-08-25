@@ -52,8 +52,6 @@ class PositioningTests(unittest.TestCase):
         controller.calibrate()
         with self.assertRaises(RuntimeError):
             controller.move_to("PLASTIC")
-        self.assertEqual(controller.current_stop, 0)
-        controller.invalidate_position()
         self.assertFalse(controller.calibrated)
 
 

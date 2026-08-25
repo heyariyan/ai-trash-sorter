@@ -28,3 +28,4 @@ All notable project changes are documented here.
 - Improved homing edge capture by sampling GPIO23 during each STEP pulse and latching brief HIGH assertions.
 - Added hardware-separated MG995 servo gate adapter on GPIO18, guarded open/close test, and mock coverage.
 - Recorded the developer-verified reversed MG995 mapping: 0 degrees = 2500 us and 90 degrees = 1500 us; switched the adapter to `lgpio.tx_servo`.
+- Added M8 offline AI-to-bin cycle orchestration with boot homing, shortest-path positioning, gate open/close, timing, and two-image mock tests; camera and ultrasonic I/O remain excluded.

@@ -6,10 +6,13 @@ from .positioning import (
     PositionPlan,
     SorterPositionController,
 )
+from .cycle import SortCycleResult, SortingCycle
 
 __all__ = [
     "DEFAULT_BIN_ORDER",
     "BinPositionPlanner",
     "PositionPlan",
     "SorterPositionController",
+    "SortCycleResult",
+    "SortingCycle",
 ]
