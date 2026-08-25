@@ -26,3 +26,4 @@ All notable project changes are documented here.
 - Added calibrated four-stop bin positioning with shortest-path rotation and tests; servo drop sequencing remains in M7.
 - Added a dual-bounded timed IR-home calibration command (deadline plus step ceiling); no unlimited actuator loop is permitted.
 - Improved homing edge capture by sampling GPIO23 during each STEP pulse and latching brief HIGH assertions.
+- Added hardware-separated MG995 servo gate adapter on GPIO18, guarded open/close test, and mock coverage.

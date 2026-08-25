@@ -11,7 +11,7 @@ The map below reserves I2C GPIO2/3 for the OLED if (and only if) the module is c
 | Stepper ENABLE | 8 | 24 | Output; active-low, default safe-off | DRV8825 carrier pinout required |
 | Stepper RESET | 7 | 26 | Output; hold disabled during startup | DRV8825 carrier pinout required |
 | Stepper SLEEP | 9 | 21 | Output; hold disabled during startup | DRV8825 carrier pinout required |
-| Servo signal | 18 | 12 | Hardware-PWM-capable output | MG995 supply and signal level required |
+| Servo signal | 18 | 12 | 50 Hz PWM output | Developer confirmed signal GPIO; MG995 supply and endpoints pending |
 | IR home sensor | 23 | 16 | Input; active-high; HIGH/3.3 V = home/0 degrees, LOW = away | Developer measured output and polarity |
 | YES switch | 20 | 38 | Input; debounce and polarity TBD | Touch-module output check required |
 | NO switch | 21 | 40 | Input; debounce and polarity TBD | Touch-module output check required |

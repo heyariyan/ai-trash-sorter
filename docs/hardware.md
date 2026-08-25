@@ -14,7 +14,7 @@ This document records only hardware that is actually present and identified. Do 
 | Ultrasonic sensor U2 | Post-drop bin-status measurement | Exact model TBD | Yes | Confirm whether HC-SR04 or 3.3 V-compatible variant |
 | NEMA17 stepper motor | Sorter rotation | NEMA17 | Yes | Coil pairs and DRV8825 wiring verified by developer; rated phase current should remain documented |
 | Stepper driver | Stepper power/control | DRV8825 carrier | Yes | VMOT 12 V; VREF 0.63 V; stated current limit approximately 1.26 A; M0/M1/M2 at GND (full-step) |
-| Servo motor | Drop gate | MG995 | Yes | Use a separate regulated servo supply; confirm voltage/current rating |
+| Servo motor | Drop gate | MG995 | Yes | Signal GPIO18 confirmed; use a separate regulated supply and confirm voltage/current/endpoints before movement |
 | IR home sensor module | Mechanical home reference | Exact module/output TBD | Yes | GPIO23; HIGH/3.3 V = home/0 degrees, LOW = away from home |
 | YES switch | Feedback input | Touch module; exact model TBD | Yes | Confirm output voltage and active polarity |
 | NO switch | Feedback input | Touch module; exact model TBD | Yes | Confirm output voltage and active polarity |
