@@ -1,6 +1,6 @@
 # M8 offline local sorting cycle
 
-Status: **Software and simulation complete; combined physical test pending.**
+Status: **Software, simulation, and guarded physical actuator cycles exercised; latest slow visual recheck pending developer observation.**
 
 This milestone composes only the local path requested for the first integrated
 test:
@@ -54,3 +54,21 @@ cutoff), the guarded command ran on the Pi at `192.168.0.245`:
 These are measured software/GPIO timings. The developer's physical observation
 of the carousel stops and item drops must be recorded before M8 is marked fully
 complete.
+
+## Slow visible METAL recheck
+
+At the developer's request, the Pi reran a slower visible sequence so the boot
+calibration could be observed before the METAL move:
+
+- Command target: Pi at `192.168.0.245`.
+- Home search: 50 ms pulse delay, GPIO23 active-high IR home input.
+- Boot calibration: home detected after 161 steps.
+- Image: `flattened-coca-cola-can...webp`.
+- Prediction: METAL, 98.44% confidence.
+- Positioning: stop 0 -> 2, clockwise, 300 steps.
+- Timing: prediction 558.370 ms, position 30,079.315 ms, gate open 500.259 ms, gate close 500.283 ms, total 31,638.312 ms.
+- Cleanup: safe stop returned true.
+
+These are the measured command results. The developer still needs to confirm
+whether the visible calibration, METAL stop, and gate motion matched the
+physical mechanism.
