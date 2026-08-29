@@ -37,7 +37,7 @@ class SortingCycle:
         self.position_controller = position_controller
         self.gate = gate
 
-    def run(self, image_path: Path) -> SortCycleResult:
+    def run(self, image_path: Path, on_prediction=None) -> SortCycleResult:
         if not self.position_controller.calibrated:
             raise RuntimeError("sorter must be calibrated before a sorting cycle")
         image_path = Path(image_path)
@@ -46,6 +46,8 @@ class SortingCycle:
         prediction_started = monotonic()
         prediction = self.model.predict(image_path)
         prediction_ms = (monotonic() - prediction_started) * 1000
+        if callable(on_prediction):
+            on_prediction(prediction)
 
         move_started = monotonic()
         plan = self.position_controller.move_to(prediction.category)

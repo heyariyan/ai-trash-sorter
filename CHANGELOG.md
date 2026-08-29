@@ -31,3 +31,11 @@ All notable project changes are documented here.
 - Added M8 offline AI-to-bin cycle orchestration with boot homing, shortest-path positioning, gate open/close, timing, and two-image mock tests; camera and ultrasonic I/O remain excluded.
 - Recorded two offline Pi image checks for M8 preparation: METAL 98.44% and OTHER 60.55%; no actuator was moved.
 - Recorded the guarded slow visible M8 METAL recheck: boot homing detected GPIO23 after 161 steps, then moved 300 steps to the METAL stop and completed the gate cycle with safe-stop cleanup.
+- Added the fast local sorter runner with boot-only calibration, U1 7 cm object detection, warm camera capture, TFLite prediction display before motion, shortest-path bin movement, gate drop, U3 post-drop bin measurement, touch feedback flow, and local-first PocketBase buffering.
+- Added hardware-separated GPIO adapters/contracts for ultrasonic sensors, OLED/console display, feedback buttons, and async PocketBase writes with simulation coverage.
+- Added on-demand calibration triggers (boot calibration, programmatic API `request_calibration()`, `--calibrate-now` CLI flag, and file-based `runtime/calibrate.trigger`).
+- Upgraded the SSD1306 I2C OLED display adapter with rich graphical screens (status/boot, prediction with confidence meter, bin status, interactive feedback prompt, correction selection menu, and error alerts).
+- Optimized waste dumping cycle speed (tuned stepper pulse delay to 3ms, servo gate open/close settle to 0.2s, non-blocking asynchronous PocketBase sync).
+- Added interactive touch feedback correction menu allowing user to select correct bin if AI prediction was wrong and store corrected label with image reference to PocketBase.
+- Added standalone hardware test and diagnostic tools: `runner.system_test` for full local system diagnostics, `sensors.ultrasonic_test` for streaming U1/U3 readings, and `display.display_test` for OLED screen verification.
+- Expanded comprehensive unit tests covering display screens, calibration triggers, feedback correction persistence, and fast local sorting cycle timings.

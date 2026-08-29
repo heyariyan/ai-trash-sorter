@@ -1,0 +1,13 @@
+{
+  "name": "feedback",
+  "type": "base",
+  "fields": [
+    {"name": "local_id", "type": "text", "required": true},
+    {"name": "event_id", "type": "text", "required": true},
+    {"name": "prediction", "type": "select", "required": true, "values": ["BIODEGRADABLE", "PLASTIC", "METAL", "OTHER"]},
+    {"name": "correct", "type": "bool", "required": false},
+    {"name": "corrected_label", "type": "select", "required": false, "values": ["BIODEGRADABLE", "PLASTIC", "METAL", "OTHER"]},
+    {"name": "image_reference", "type": "text", "required": true},
+    {"name": "timestamp", "type": "date", "required": true}
+  ]
+}

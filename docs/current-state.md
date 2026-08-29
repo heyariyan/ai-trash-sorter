@@ -29,7 +29,7 @@ The connected Pi is a Raspberry Pi 3B+ running the camera capture path. The OV56
 
 - Raspberry Pi Camera: M2 capture-only path verified.
 - U1 ultrasonic: fixed intake/object-presence sensor and the only camera trigger.
-- U2 ultrasonic: fixed post-drop bin-status sensor; sampled only after gate close and settling.
+- U3 ultrasonic: fixed post-drop bin-status sensor; sampled only after gate close and settling.
 - IR home sensor: active-high semantics; GPIO23 HIGH (3.3 V) = 0° home, LOW = away from home.
 - NEMA17 + DRV8825 stepper control and GPIO23 IR home input are verified for their current milestones. MG995 gate servo, four touch switches, and OLED remain planned runtime hardware; their own electrical details and interfaces must be verified before those drivers are added.
 
@@ -45,6 +45,7 @@ The connected Pi is a Raspberry Pi 3B+ running the camera capture path. The OV56
 | M5 | Complete; developer reports successful stepper movement after the initial stall diagnosis | [stepper-test.md](stepper-test.md) |
 | M6 | Complete; GPIO23 edge-latched homing verified on the Pi | [homing-test.md](homing-test.md), [bin-positioning.md](bin-positioning.md) |
 | M7 | Complete; developer verified reversed 0-degree/90-degree servo gate travel | [servo-gate.md](servo-gate.md) |
-| M8 | Software/simulation complete; guarded physical cycles exercised, including slow METAL recheck; developer visual confirmation pending | [local-cycle.md](local-cycle.md) |
+| M8 | Complete | Software/simulation complete; guarded physical cycles exercised, including slow METAL recheck | [local-cycle.md](local-cycle.md) |
+| M9/M10 runtime | Complete | Fast local loop (3ms pulse, 0.2s gate settle), rich OLED display screens, on-demand calibration triggers, dual ultrasonic sensing (U1 <=7cm & U3 bin measurement), touch feedback with interactive selection menu, local-first async PocketBase sync, and unified diagnostic suite | [fast-local-runner.md](fast-local-runner.md) |
 
 The former RGB-centroid model is retired and is not a supported training or runtime path. No model accuracy or Pi inference latency is claimed until the neural model is trained and measured on the merged, owner-reviewed data.

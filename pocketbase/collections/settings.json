@@ -1,0 +1,10 @@
+{
+  "name": "settings",
+  "type": "base",
+  "fields": [
+    {"name": "local_id", "type": "text", "required": false},
+    {"name": "key", "type": "text", "required": true},
+    {"name": "value", "type": "json", "required": true},
+    {"name": "timestamp", "type": "date", "required": false}
+  ]
+}
