@@ -31,15 +31,19 @@ class ObjectPresenceDetector:
         self,
         sensor: UltrasonicSensor,
         present_threshold_cm: float,
+        min_distance_cm: float = 1.5,
         present_samples: int = 2,
         clear_samples: int = 2,
     ) -> None:
         if present_threshold_cm <= 0:
             raise ValueError("present_threshold_cm must be positive")
+        if min_distance_cm < 0 or min_distance_cm >= present_threshold_cm:
+            raise ValueError("min_distance_cm must be non-negative and less than present_threshold_cm")
         if present_samples <= 0 or clear_samples <= 0:
             raise ValueError("debounce sample counts must be positive")
         self.sensor = sensor
         self.present_threshold_cm = present_threshold_cm
+        self.min_distance_cm = min_distance_cm
         self.present_samples = present_samples
         self.clear_samples = clear_samples
         self.present = False
@@ -48,12 +52,20 @@ class ObjectPresenceDetector:
 
     def poll(self) -> PresenceReading:
         distance = self.sensor.read_distance_cm()
-        valid = distance is not None and isfinite(distance) and distance > 0
         previous = self.present
+
+        valid = (
+            distance is not None
+            and isfinite(distance)
+            and distance > 0
+        )
+
+        is_object_in_range = valid and (self.min_distance_cm <= distance <= self.present_threshold_cm)
+
         if not valid:
             self._present_count = 0
             self._clear_count = 0
-        elif distance <= self.present_threshold_cm:
+        elif is_object_in_range:
             self._present_count += 1
             self._clear_count = 0
             if self._present_count >= self.present_samples:
@@ -63,6 +75,7 @@ class ObjectPresenceDetector:
             self._present_count = 0
             if self._clear_count >= self.clear_samples:
                 self.present = False
+
         return PresenceReading(
             distance_cm=distance if valid else None,
             present=self.present,

@@ -78,7 +78,7 @@ class LgpioUltrasonicSensor:
     def read_distance_cm(self) -> float | None:
         gpio, handle = self._require_started()
         gpio.gpio_write(handle, self.trigger_gpio, 0)
-        sleep(0.000002)
+        sleep(0.000005)
         gpio.gpio_write(handle, self.trigger_gpio, 1)
         sleep(self.trigger_pulse_seconds)
         gpio.gpio_write(handle, self.trigger_gpio, 0)
@@ -95,7 +95,10 @@ class LgpioUltrasonicSensor:
                 return None
 
         duration = monotonic() - echo_started
-        return round((duration * self.speed_of_sound_cm_s) / 2, 3)
+        distance = (duration * self.speed_of_sound_cm_s) / 2
+        if distance < 1.0 or distance > 400.0:
+            return None
+        return round(distance, 2)
 
     def close(self) -> None:
         if self._gpio is None or self._handle is None:

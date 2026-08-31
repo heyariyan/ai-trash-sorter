@@ -35,7 +35,8 @@ class RuntimeConfig:
     capture_dir: Path = Path("/var/lib/ai-trash-sorter/images")
     buffer_dir: Path = Path("/var/lib/ai-trash-sorter/runtime")
     presence_threshold_cm: float = 7.0
-    presence_samples: int = 1
+    min_presence_cm: float = 1.5
+    presence_samples: int = 2
     clear_samples: int = 2
     poll_seconds: float = 0.05
     feedback_timeout_seconds: float = 8.0
@@ -45,6 +46,9 @@ class RuntimeConfig:
     home_direction: int = 0
     home_max_steps: int = 1000
     bin_order: tuple[str, ...] = DEFAULT_BIN_ORDER
+    servo_closed_angle: float = 0.0
+    servo_open_angle: float = 90.0
+    servo_reverse: bool = True
 
 
 class StaticModel:
@@ -101,7 +105,11 @@ class FastLocalSorterRunner:
         self.display.show_status("Starting")
         self.camera.start()
         self.gate.close()
-        self.calibrate(force=True)
+        try:
+            self.calibrate(force=True)
+        except Exception as exc:
+            self.display.show_error(f"Homing: {exc}")
+            sleep(1.0)
         self.display.show_status("Ready")
 
     def calibrate(self, *, force: bool = False) -> None:
@@ -118,6 +126,15 @@ class FastLocalSorterRunner:
         except Exception as exc:
             self.display.show_error(f"Homing: {exc}")
             raise
+
+    def wait_for_clear(self, *, timeout_seconds: float = 2.0) -> None:
+        """Wait until the intake chute is cleared of objects."""
+        started = monotonic()
+        while monotonic() - started < timeout_seconds:
+            reading = self.presence_detector.poll()
+            if not reading.present:
+                return
+            sleep(self.config.poll_seconds)
 
     def wait_for_object(self, *, timeout_seconds: float | None = None):
         started = monotonic()
@@ -198,6 +215,9 @@ class FastLocalSorterRunner:
             timeout_seconds=self.config.feedback_timeout_seconds,
         )
         self._save_feedback(event_id, prediction, feedback, capture.path)
+        
+        # Ensure chute is clear before returning to Ready
+        self.wait_for_clear(timeout_seconds=2.0)
         self.display.show_status("Ready")
 
         capture_data = asdict(capture)
@@ -264,10 +284,16 @@ def _build_runner(args: argparse.Namespace) -> FastLocalSorterRunner:
         capture_dir=args.capture_dir,
         buffer_dir=args.buffer_dir,
         presence_threshold_cm=args.presence_threshold_cm,
+        min_presence_cm=args.min_presence_cm,
+        presence_samples=args.presence_samples,
+        clear_samples=args.clear_samples,
         steps_per_revolution=args.steps_per_revolution,
         stepper_pulse_delay_seconds=args.stepper_pulse_delay_ms / 1000,
         feedback_timeout_seconds=args.feedback_timeout_seconds,
         post_drop_settle_seconds=args.post_drop_settle_seconds,
+        servo_closed_angle=args.servo_closed_angle,
+        servo_open_angle=args.servo_open_angle,
+        servo_reverse=not args.servo_normal_direction,
     )
     display = SSD1306I2CDisplay() if args.display == "ssd1306" else ConsoleDisplay()
 
@@ -293,7 +319,7 @@ def _build_runner(args: argparse.Namespace) -> FastLocalSorterRunner:
         stepper.start()
         home_sensor = IRHomeSensor()
         home_sensor.start()
-        servo = LgpioServo()
+        servo = LgpioServo(signal_gpio=args.servo_gpio, reverse=config.servo_reverse)
         servo.start()
         feedback_panel = TouchSwitchFeedbackPanel(active_level=args.touch_active_level)
         feedback_panel.start()
@@ -306,7 +332,14 @@ def _build_runner(args: argparse.Namespace) -> FastLocalSorterRunner:
         steps_per_revolution=config.steps_per_revolution,
     )
     position = SorterPositionController(stepper, home_sensor, planner)
-    gate = ServoGate(servo, GateConfig(settle_seconds=args.gate_settle_seconds))
+    gate = ServoGate(
+        servo,
+        GateConfig(
+            closed_angle=config.servo_closed_angle,
+            open_angle=config.servo_open_angle,
+            settle_seconds=args.gate_settle_seconds,
+        ),
+    )
     pb = PocketBaseClient(args.pocketbase_url) if args.pocketbase_url else None
     store = LocalFirstEventStore(
         buffer_dir=config.buffer_dir,
@@ -316,6 +349,7 @@ def _build_runner(args: argparse.Namespace) -> FastLocalSorterRunner:
     detector = ObjectPresenceDetector(
         presence_sensor,
         present_threshold_cm=config.presence_threshold_cm,
+        min_distance_cm=config.min_presence_cm,
         present_samples=config.presence_samples,
         clear_samples=config.clear_samples,
     )
@@ -353,8 +387,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--capture-dir", type=Path, default=Path("/var/lib/ai-trash-sorter/images"))
     parser.add_argument("--buffer-dir", type=Path, default=Path("/var/lib/ai-trash-sorter/runtime"))
     parser.add_argument("--presence-threshold-cm", type=float, default=7.0)
+    parser.add_argument("--min-presence-cm", type=float, default=1.5)
+    parser.add_argument("--presence-samples", type=int, default=2)
+    parser.add_argument("--clear-samples", type=int, default=2)
     parser.add_argument("--steps-per-revolution", type=int, default=600)
     parser.add_argument("--stepper-pulse-delay-ms", type=float, default=3.0)
+    parser.add_argument("--servo-gpio", type=int, default=18)
+    parser.add_argument("--servo-closed-angle", type=float, default=0.0)
+    parser.add_argument("--servo-open-angle", type=float, default=90.0)
+    parser.add_argument("--servo-normal-direction", action="store_true")
     parser.add_argument("--gate-settle-seconds", type=float, default=0.2)
     parser.add_argument("--post-drop-settle-seconds", type=float, default=0.2)
     parser.add_argument("--feedback-timeout-seconds", type=float, default=8.0)

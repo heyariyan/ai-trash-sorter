@@ -39,3 +39,4 @@ All notable project changes are documented here.
 - Added interactive touch feedback correction menu allowing user to select correct bin if AI prediction was wrong and store corrected label with image reference to PocketBase.
 - Added standalone hardware test and diagnostic tools: `runner.system_test` for full local system diagnostics, `sensors.ultrasonic_test` for streaming U1/U3 readings, and `display.display_test` for OLED screen verification.
 - Expanded comprehensive unit tests covering display screens, calibration triggers, feedback correction persistence, and fast local sorting cycle timings.
+- Configured and enabled production `ai-trash-sorter.service` systemd autostart on the Raspberry Pi with continuous automatic startup on boot and auto-recovery.

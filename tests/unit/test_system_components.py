@@ -1,4 +1,4 @@
-﻿import json
+import json
 import sys
 import tempfile
 import unittest
@@ -55,7 +55,7 @@ class SystemComponentsTests(unittest.TestCase):
             runner = FastLocalSorterRunner(
                 config=config,
                 presence_detector=ObjectPresenceDetector(
-                    MockUltrasonicSensor([5.0, 5.0]),
+                    MockUltrasonicSensor([5.0, 20.0, 5.0, 20.0]),
                     present_threshold_cm=7.0,
                     present_samples=1,
                 ),
@@ -66,7 +66,7 @@ class SystemComponentsTests(unittest.TestCase):
                 display=display,
                 feedback_panel=MockFeedbackPanel([FeedbackResult(correct=True)]),
                 event_store=store,
-                bin_status_sensor=MockUltrasonicSensor([15.0]),
+                bin_status_sensor=MockUltrasonicSensor([15.0, 15.0]),
             )
 
             runner.start()
