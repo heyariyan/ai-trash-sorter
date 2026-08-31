@@ -46,6 +46,6 @@ The connected Pi is a Raspberry Pi 3B+ running the camera capture path. The OV56
 | M6 | Complete; GPIO23 edge-latched homing verified on the Pi | [homing-test.md](homing-test.md), [bin-positioning.md](bin-positioning.md) |
 | M7 | Complete; developer verified reversed 0-degree/90-degree servo gate travel | [servo-gate.md](servo-gate.md) |
 | M8 | Complete | Software/simulation complete; guarded physical cycles exercised, including slow METAL recheck | [local-cycle.md](local-cycle.md) |
-| M9/M10 runtime | Complete | Fast local loop (3ms pulse, 0.2s gate settle), rich OLED display screens, on-demand calibration triggers, dual ultrasonic sensing (U1 <=7cm & U3 bin measurement), touch feedback with interactive selection menu, local-first async PocketBase sync, and unified diagnostic suite | [fast-local-runner.md](fast-local-runner.md) |
+| M9/M10 runtime | Complete | Deployed and verified on physical Raspberry Pi (192.168.0.183): fast local loop (3ms pulse, 0.2s gate settle), rich OLED display screens, on-demand calibration triggers, dual ultrasonic sensing (U1 <=7cm & U3 bin measurement), touch feedback with interactive selection menu, local-first async PocketBase sync, and unified diagnostic suite | [fast-local-runner.md](fast-local-runner.md) |
 
 The former RGB-centroid model is retired and is not a supported training or runtime path. No model accuracy or Pi inference latency is claimed until the neural model is trained and measured on the merged, owner-reviewed data.

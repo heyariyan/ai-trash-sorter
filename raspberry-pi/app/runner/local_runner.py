@@ -297,7 +297,9 @@ def _build_runner(args: argparse.Namespace) -> FastLocalSorterRunner:
         servo.start()
         feedback_panel = TouchSwitchFeedbackPanel(active_level=args.touch_active_level)
         feedback_panel.start()
-        model = TFLiteModel(args.model)
+        default_model = Path("/home/ariyan/ai-trash-sorter-test/model/waste-mobilenet-taco-kaggle-v1.tflite")
+        model_path = args.model or (default_model if default_model.is_file() else None)
+        model = TFLiteModel(model_path) if model_path is not None else StaticModel("PLASTIC")
 
     planner = BinPositionPlanner(
         bin_order=config.bin_order,

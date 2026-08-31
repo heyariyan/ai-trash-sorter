@@ -1,0 +1,28 @@
+﻿[Unit]
+Description=AI Trash Sorter Appliance Service
+After=network.target local-fs.target
+
+[Service]
+Type=simple
+User=ariyan
+Group=ariyan
+WorkingDirectory=/home/ariyan/ai-trash-sorter-test
+Environment=PYTHONPATH=/home/ariyan/ai-trash-sorter-test/app
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/ariyan/.venvs/ai-trash-sorter/bin/python -m runner.local_runner \
+    --model /home/ariyan/ai-trash-sorter-test/model/waste-mobilenet-taco-kaggle-v1.tflite \
+    --confirm-movement \
+    --display ssd1306 \
+    --steps-per-revolution 600 \
+    --stepper-pulse-delay-ms 3 \
+    --gate-settle-seconds 0.2 \
+    --presence-threshold-cm 7 \
+    --buffer-dir /var/lib/ai-trash-sorter/runtime \
+    --capture-dir /var/lib/ai-trash-sorter/images
+Restart=always
+RestartSec=3
+KillMode=process
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
