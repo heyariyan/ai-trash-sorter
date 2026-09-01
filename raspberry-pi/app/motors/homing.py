@@ -45,6 +45,7 @@ def home_stepper(
     *,
     direction: int = 0,
     max_steps: int = 400,
+    timeout_seconds: float | None = None,
 ) -> HomingResult:
     """Move one step at a time until the active-high home input is reached.
 
@@ -57,11 +58,16 @@ def home_stepper(
         raise ValueError("direction must be 0 or 1")
     if max_steps <= 0:
         raise ValueError("max_steps must be positive")
+    if timeout_seconds is not None and timeout_seconds <= 0:
+        raise ValueError("timeout_seconds must be positive when provided")
 
     if sensor.is_home():
         return HomingResult(reached_home=True, steps_taken=0, already_home=True)
 
+    deadline = monotonic() + timeout_seconds if timeout_seconds is not None else None
     for steps_taken in range(1, max_steps + 1):
+        if deadline is not None and monotonic() >= deadline:
+            raise HomingError(f"home not detected within {timeout_seconds} seconds")
         if _move_one_step_and_check(stepper, sensor, direction):
             return HomingResult(
                 reached_home=True,

@@ -6,23 +6,15 @@ After=network.target local-fs.target
 Type=simple
 User=ariyan
 Group=ariyan
-WorkingDirectory=/home/ariyan/ai-trash-sorter-test
-Environment=PYTHONPATH=/home/ariyan/ai-trash-sorter-test/app
+WorkingDirectory=/opt/ai-trash-sorter/raspberry-pi
+Environment=PYTHONPATH=/opt/ai-trash-sorter/raspberry-pi/app
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/ariyan/.venvs/ai-trash-sorter/bin/python -m runner.local_runner \
-    --model /home/ariyan/ai-trash-sorter-test/model/waste-mobilenet-taco-kaggle-v1.tflite \
-    --confirm-movement \
-    --display ssd1306 \
-    --steps-per-revolution 600 \
-    --stepper-pulse-delay-ms 3 \
-    --gate-settle-seconds 0.2 \
-    --presence-threshold-cm 7 \
-    --buffer-dir /var/lib/ai-trash-sorter/runtime \
-    --capture-dir /var/lib/ai-trash-sorter/images
+ExecStart=/opt/ai-trash-sorter/raspberry-pi/.venv/bin/python -m main \
+    --config /etc/ai-trash-sorter/config.json --confirm-actuators
 Restart=always
 RestartSec=3
 KillMode=process
-TimeoutStopSec=10
+TimeoutStopSec=15
 
 [Install]
 WantedBy=multi-user.target

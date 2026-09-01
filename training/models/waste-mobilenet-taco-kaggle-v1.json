@@ -1,0 +1,32 @@
+{
+  "architecture": "MobileNetV2 transfer learning",
+  "classes": [
+    "BIODEGRADABLE",
+    "PLASTIC",
+    "METAL",
+    "OTHER"
+  ],
+  "created_at": "2026-08-25T07:17:46.780685+00:00",
+  "dataset": {
+    "dataset_version": "taco-subset20-kaggle-v1",
+    "manifest": "C:\\Users\\ariya\\AppData\\Local\\Temp\\ai-trash-sorter-taco-kaggle.jsonl"
+  },
+  "deployment_status": "not_deployed",
+  "format": "tflite_classifier_v1",
+  "input": {
+    "channels": 3,
+    "height": 160,
+    "width": 160
+  },
+  "metrics": {
+    "final_train_accuracy": 0.7923691272735596,
+    "final_validation_accuracy": 0.7724137902259827,
+    "test_accuracy": 0.8055172562599182,
+    "test_loss": 0.499121755361557,
+    "test_samples": 725,
+    "train_samples": 3381,
+    "validation_samples": 725
+  },
+  "model_version": "waste-mobilenet-taco-kaggle-v1",
+  "quantization": "full integer weights and uint8 input/output"
+}

@@ -1,0 +1,10 @@
+{
+  "python.defaultInterpreterPath": "python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/raspberry-pi/app"
+  ],
+  "python.testing.unittestEnabled": true,
+  "python.testing.pytestEnabled": true,
+  "python.testing.cwd": "${workspaceFolder}",
+  "python.analysis.autoImportCompletions": true
+}

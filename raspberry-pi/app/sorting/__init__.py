@@ -1,4 +1,4 @@
-"""Hardware-independent bin selection and carousel positioning."""
+"""Carousel positioning used by the production state machine."""
 
 from .positioning import (
     DEFAULT_BIN_ORDER,
@@ -6,13 +6,10 @@ from .positioning import (
     PositionPlan,
     SorterPositionController,
 )
-from .cycle import SortCycleResult, SortingCycle
 
 __all__ = [
     "DEFAULT_BIN_ORDER",
     "BinPositionPlanner",
     "PositionPlan",
     "SorterPositionController",
-    "SortCycleResult",
-    "SortingCycle",
 ]

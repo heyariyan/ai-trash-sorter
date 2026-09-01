@@ -100,7 +100,13 @@ class SorterPositionController:
     def calibrated(self) -> bool:
         return self.current_stop is not None
 
-    def calibrate(self, *, home_direction: int = 0, max_home_steps: int = 400) -> HomingResult:
+    def calibrate(
+        self,
+        *,
+        home_direction: int = 0,
+        max_home_steps: int = 400,
+        home_timeout_seconds: float | None = None,
+    ) -> HomingResult:
         """Home once at boot and establish logical stop 0."""
 
         result = home_stepper(
@@ -108,6 +114,7 @@ class SorterPositionController:
             self.home_sensor,
             direction=home_direction,
             max_steps=max_home_steps,
+            timeout_seconds=home_timeout_seconds,
         )
         self.current_stop = 0
         return result

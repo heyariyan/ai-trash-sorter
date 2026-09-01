@@ -1,0 +1,15 @@
+{
+  "device_id": "rpi-sorter-01",
+  "model_path": "/opt/ai-trash-sorter/model/model.tflite",
+  "model_metadata_path": "/opt/ai-trash-sorter/model/model.json",
+  "data_dir": "/var/lib/ai-trash-sorter",
+  "firebase_database_url": "https://trash2444-default-rtdb.asia-southeast1.firebasedatabase.app",
+  "firebase_credentials_path": "/etc/ai-trash-sorter/firebase-service-account.json",
+  "firebase_storage_bucket": "trash2444.firebasestorage.app",
+  "display": "ssd1306",
+  "steps_per_revolution": 600,
+  "step_pulse_seconds": 0.003,
+  "home_timeout_seconds": 20,
+  "trigger_distance_cm": 7.0,
+  "temporary_image_ttl_seconds": 86400
+}

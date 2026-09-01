@@ -1,0 +1,165 @@
+import 'package:flutter/material.dart';
+
+import '../services/firebase_service.dart';
+
+class SettingsScreen extends StatelessWidget {
+  final FirebaseService firebase;
+  final String deviceId;
+
+  const SettingsScreen({
+    super.key,
+    required this.firebase,
+    required this.deviceId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final user = firebase.currentUser;
+    final theme = Theme.of(context);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // --- Account Section ---
+        Text('Account', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const CircleAvatar(child: Icon(Icons.person)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.displayName ?? 'Operator',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          Text(
+                            user?.email ?? '—',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                FilledButton.tonal(
+                  onPressed: () => firebase.signOut(),
+                  child: const Text('Sign out'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // --- Device Info ---
+        Text('Device', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.devices),
+                title: const Text('Device ID'),
+                trailing: Text(deviceId, style: const TextStyle(fontFamily: 'monospace')),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.cloud),
+                title: const Text('Firebase project'),
+                trailing: const Text('trash2444'),
+              ),
+              const Divider(height: 1),
+              StreamBuilder<Map<String, dynamic>?>(
+                stream: firebase.statusStream(),
+                builder: (context, snap) {
+                  final state = snap.data?['state']?.toString() ?? 'UNKNOWN';
+                  return ListTile(
+                    leading: const Icon(Icons.memory),
+                    title: const Text('Pi state'),
+                    trailing: Text(state),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              StreamBuilder<Map<String, dynamic>?>(
+                stream: firebase.statusStream(),
+                builder: (context, snap) {
+                  final model = snap.data?['model_version']?.toString() ?? '—';
+                  return ListTile(
+                    leading: const Icon(Icons.model_training),
+                    title: const Text('Model version'),
+                    trailing: Text(model),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // --- Danger Zone ---
+        Text('Danger zone', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.warning_amber, color: Colors.orange),
+            title: const Text('Request home calibration'),
+            subtitle: const Text('Moves the carousel to the home position'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => firebase.requestHome(),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // --- About ---
+        Text('About', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Card(
+          child: Column(
+            children: [
+              const ListTile(
+                leading: Icon(Icons.info_outline),
+                title: Text('Novi AI Trash Sorter'),
+                subtitle: Text('App version 1.0.0'),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.code),
+                title: const Text('Architecture'),
+                subtitle: const Text('Raspberry Pi + Flutter + Firebase'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  showAboutDialog(
+                    context: context,
+                    applicationName: 'Novi Sorter',
+                    applicationVersion: '1.0.0',
+                    applicationLegalese: '© 2026 Novi AI Trash Sorter',
+                    children: const [
+                      Text(
+                        'An autonomous waste-sorting appliance that uses AI image '
+                        'classification to sort waste into four bins (biodegradable, '
+                        'plastic, metal, other). The Raspberry Pi handles all physical '
+                        'sorting autonomously; this app provides a read-only operator '
+                        'interface.',
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
