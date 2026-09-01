@@ -46,9 +46,9 @@ class SorterConfig:
     servo_gpio: int = 18
     servo_closed_angle: float = 0.0
     servo_open_angle: float = 90.0
-    servo_reverse: bool = True
-    gate_settle_seconds: float = 0.20
-    drop_delay_seconds: float = 0.35
+    servo_reverse: bool = False
+    gate_settle_seconds: float = 0.70
+    drop_delay_seconds: float = 0.60
     post_drop_settle_seconds: float = 0.20
     failed_image_retention: bool = True
     temporary_image_ttl_seconds: int = 86400
@@ -57,6 +57,12 @@ class SorterConfig:
     firebase_storage_bucket: str | None = None
     firebase_timeout_seconds: float = 5.0
     display: str = "console"
+    feedback_timeout_seconds: float = 8.0
+    yes_gpio: int = 20
+    no_gpio: int = 21
+    prev_gpio: int = 16
+    next_gpio: int = 12
+    firebase_max_events: int = 10
 
     def __post_init__(self) -> None:
         for attr in ("model_path", "data_dir"):

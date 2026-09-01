@@ -47,6 +47,26 @@ class FirebaseService:
     def submit_set(self, path: str, value: dict[str, Any]) -> None:
         self._executor.submit(self._set, path, value)
 
+    def submit_event(self, device_id: str, event_id: str, event: dict[str, Any], max_events: int = 10) -> None:
+        self._executor.submit(self._log_and_trim_event, device_id, event_id, event, max_events)
+
+    def _log_and_trim_event(self, device_id: str, event_id: str, event: dict[str, Any], max_events: int) -> None:
+        self._set(f"devices/{device_id}/events/{event_id}", event)
+        try:
+            events_ref = self._reference(f"devices/{device_id}/events")
+            if events_ref is not None:
+                all_events = events_ref.get()
+                if isinstance(all_events, dict) and len(all_events) > max_events:
+                    sorted_keys = sorted(
+                        all_events.keys(),
+                        key=lambda k: str(all_events[k].get("timestamp", "") if isinstance(all_events[k], dict) else "")
+                    )
+                    excess = len(sorted_keys) - max_events
+                    for k in sorted_keys[:excess]:
+                        events_ref.child(k).delete()
+        except Exception:
+            logging.exception("Failed to trim old Firebase events")
+
     def submit_update(self, path: str, value: dict[str, Any]) -> None:
         self._executor.submit(self._update, path, value)
 

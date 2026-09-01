@@ -85,8 +85,13 @@ class TouchSwitchFeedbackPanel:
             import lgpio
 
             handle = lgpio.gpiochip_open(self.chip)
+            # Use SET_PULL_DOWN if active_level is 1, so open switches stay 0
+            bias = lgpio.SET_PULL_DOWN if self.active_level == 1 else lgpio.SET_PULL_UP
             for pin in (self.yes_gpio, self.no_gpio, self.prev_gpio, self.next_gpio):
-                lgpio.gpio_claim_input(handle, pin)
+                try:
+                    lgpio.gpio_claim_input(handle, pin, bias)
+                except Exception:
+                    lgpio.gpio_claim_input(handle, pin)
         except Exception as exc:
             try:
                 if lgpio is not None and handle is not None:
@@ -103,17 +108,38 @@ class TouchSwitchFeedbackPanel:
         return self._gpio, self._handle
 
     def _pressed(self, pin: int) -> bool:
+        """Sample multiple times with short delay to filter high-frequency noise."""
         gpio, handle = self._require_started()
-        return int(gpio.gpio_read(handle, pin)) == self.active_level
+        val1 = int(gpio.gpio_read(handle, pin)) == self.active_level
+        if not val1:
+            return False
+        # Verify with 2 more samples 10ms apart (30ms total stable window)
+        sleep(0.01)
+        val2 = int(gpio.gpio_read(handle, pin)) == self.active_level
+        if not val2:
+            return False
+        sleep(0.01)
+        val3 = int(gpio.gpio_read(handle, pin)) == self.active_level
+        return val1 and val2 and val3
 
-    def _wait_press(self, pins: Sequence[int], timeout_seconds: float) -> int | None:
+    def _wait_press(
+        self,
+        pins: Sequence[int],
+        timeout_seconds: float,
+        interrupt_check=None,
+    ) -> int | None:
         deadline = monotonic() + timeout_seconds
         while monotonic() < deadline:
+            if interrupt_check and interrupt_check():
+                return None
             for pin in pins:
                 if self._pressed(pin):
-                    while self._pressed(pin) and monotonic() < deadline:
-                        sleep(self.poll_seconds)
-                    return pin
+                    # 30ms hardware debounce to filter out momentary noise
+                    sleep(0.03)
+                    if self._pressed(pin):
+                        while self._pressed(pin) and monotonic() < deadline:
+                            sleep(self.poll_seconds)
+                        return pin
             sleep(self.poll_seconds)
         return None
 
@@ -124,12 +150,17 @@ class TouchSwitchFeedbackPanel:
         labels: Sequence[str],
         display,
         timeout_seconds: float,
+        interrupt_check=None,
     ) -> FeedbackResult:
         if timeout_seconds <= 0:
             return FeedbackResult(correct=None, timed_out=True)
         labels = tuple(str(label).upper() for label in labels)
         display.show_feedback_prompt(f"{prediction} correct? YES/NO")
-        pressed = self._wait_press((self.yes_gpio, self.no_gpio), timeout_seconds)
+        pressed = self._wait_press(
+            (self.yes_gpio, self.no_gpio),
+            timeout_seconds,
+            interrupt_check=interrupt_check,
+        )
         if pressed == self.yes_gpio:
             return FeedbackResult(correct=True)
         if pressed != self.no_gpio:
@@ -143,6 +174,7 @@ class TouchSwitchFeedbackPanel:
             pressed = self._wait_press(
                 (self.prev_gpio, self.next_gpio, self.yes_gpio),
                 min(timeout_seconds, remaining),
+                interrupt_check=interrupt_check,
             )
             if pressed == self.prev_gpio:
                 selected = (selected - 1) % len(labels)

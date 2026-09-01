@@ -126,9 +126,9 @@ cat > "$CONFIG_DIR/config.json" <<EOF
   "firebase_database_url": "$DB_URL",
   "firebase_storage_bucket": "$STORAGE_BUCKET",
   $( [ -n "$CREDS_PATH" ] && echo "\"firebase_credentials_path\": \"$CREDS_PATH\"," || echo "\"firebase_credentials_path\": null," )
-  "display": "console",
-  "steps_per_revolution": 600,
-  "step_pulse_seconds": 0.003,
+  "display": "ssd1306",
+  "steps_per_revolution": 200,
+  "step_pulse_seconds": 0.005,
   "home_timeout_seconds": 20,
   "trigger_distance_cm": 7.0,
   "temporary_image_ttl_seconds": 86400

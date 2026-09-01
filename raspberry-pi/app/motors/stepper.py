@@ -83,6 +83,13 @@ class LgpioStepper:
             self._gpio.gpio_write(self._handle, self.enable_gpio, 1)
 
     def move_steps(self, steps: int, direction: int = 0) -> None:
+        """Move with a trapezoidal acceleration/deceleration ramp.
+
+        The ramp uses up to 30% of total steps for acceleration and 30%
+        for deceleration (minimum 8 steps each).  The remaining middle
+        steps run at the configured ``pulse_delay_seconds`` which is the
+        maximum speed.  This prevents missed steps on loaded carousels.
+        """
         gpio, handle = self._require_started()
         if steps <= 0:
             raise ValueError("steps must be positive")
@@ -93,12 +100,28 @@ class LgpioStepper:
         gpio.gpio_write(handle, self.sleep_gpio, 1)
         sleep(0.01)
         self.enable()
+
+        min_delay = self.pulse_delay_seconds            # fastest (configured)
+        max_delay = max(0.012, min_delay * 3)          # slowest (start/end)
+        ramp_steps = max(8, int(steps * 0.25))         # accel/decel length
+
         try:
-            for _ in range(steps):
+            for i in range(steps):
+                # Trapezoidal ramp: accelerate → cruise → decelerate
+                if i < ramp_steps:
+                    # Accelerating: max_delay → min_delay
+                    t = i / ramp_steps
+                elif i >= steps - ramp_steps:
+                    # Decelerating: min_delay → max_delay
+                    t = (steps - 1 - i) / ramp_steps
+                else:
+                    # Cruise at max speed
+                    t = 1.0
+                delay = max_delay - (max_delay - min_delay) * min(1.0, max(0.0, t))
                 gpio.gpio_write(handle, self.step_gpio, 1)
-                sleep(self.pulse_delay_seconds)
+                sleep(delay)
                 gpio.gpio_write(handle, self.step_gpio, 0)
-                sleep(self.pulse_delay_seconds)
+                sleep(delay)
         finally:
             self.disable()
 

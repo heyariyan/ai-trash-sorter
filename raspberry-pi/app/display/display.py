@@ -47,6 +47,14 @@ class ConsoleDisplay:
         else:
             print(f"[FEEDBACK] {message} [YES: GPIO20 / NO: GPIO21]", flush=True)
 
+    def show_feedback_saved(self, status: str, label: str | None = None) -> None:
+        if status == "correct":
+            print(f"[FEEDBACK SAVED] Confirmed Correct!", flush=True)
+        elif status == "corrected":
+            print(f"[FEEDBACK SAVED] Corrected to: {label} (image saved locally)", flush=True)
+        else:
+            print(f"[FEEDBACK] Unreviewed (timeout)", flush=True)
+
     def show_bin_status(self, category: str, distance_cm: float | None) -> None:
         dist_str = f"{distance_cm:.1f} cm" if distance_cm is not None else "N/A"
         print(f"[BIN STATUS] Bin: {category} | Level: {dist_str}", flush=True)
@@ -190,10 +198,27 @@ class SSD1306I2CDisplay:
             else:
                 self._draw_header(draw, "USER FEEDBACK")
                 draw.text((6, 16), message[:20], fill=1)
-                draw.rectangle((6, 32, 56, 50), outline=1)
-                draw.text((12, 36), "YES [1]", fill=1)
-                draw.rectangle((66, 32, 116, 50), outline=1)
-                draw.text((74, 36), "NO [2]", fill=1)
+                draw.rectangle((6, 32, 58, 52), outline=1)
+                draw.text((12, 37), "YES [20]", fill=1)
+                draw.rectangle((66, 32, 118, 52), outline=1)
+                draw.text((72, 37), "NO [21]", fill=1)
+
+        self._draw_screen(draw_ui)
+
+    def show_feedback_saved(self, status: str, label: str | None = None) -> None:
+        def draw_ui(draw):
+            self._draw_header(draw, "FEEDBACK SAVED")
+            if status == "correct":
+                draw.text((8, 20), "Classification OK!", fill=1)
+                draw.text((8, 38), "Marked: Correct", fill=1)
+            elif status == "corrected":
+                draw.text((8, 20), "Saved Correction:", fill=1)
+                draw.rectangle((8, 34, self.width - 9, 50), fill=1)
+                draw.text((16, 37), f"{label}", fill=0)
+                draw.text((8, 52), "Image saved locally", fill=1)
+            else:
+                draw.text((8, 25), "Feedback Timeout", fill=1)
+                draw.text((8, 42), "Auto-cleared", fill=1)
 
         self._draw_screen(draw_ui)
 

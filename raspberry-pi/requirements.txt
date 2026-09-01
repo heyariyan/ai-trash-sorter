@@ -5,3 +5,6 @@ firebase-admin>=6.0
 # Raspberry Pi 3B+ aarch64/Python 3.13 test runtime.
 ai-edge-litert>=2.2
 # On another architecture, replace this with a matching tflite-runtime wheel.
+# OLED display
+luma.oled>=3.14
+luma.core>=2.6

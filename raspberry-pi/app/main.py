@@ -11,6 +11,7 @@ from ai.inference import Prediction, TFLiteModel
 from camera.camera import MockCamera, Picamera2Camera
 from config import SorterConfig, load_config
 from display.display import ConsoleDisplay, SSD1306I2CDisplay
+from feedback.buttons import MockFeedbackPanel, TouchSwitchFeedbackPanel
 from firebase_service import FirebaseService
 from image_retention import ImageRetentionManager
 from motors.servo import GateConfig, LgpioServo, MockServo, ServoGate
@@ -38,6 +39,7 @@ def build_machine(config: SorterConfig, *, simulation: bool, simulation_category
         camera, model = MockCamera(), SimulationModel(simulation_category)
         u1, u3, stepper, home = MockUltrasonicSensor([5.0, 5.0, 30.0]), MockUltrasonicSensor([20.0]), SimulationStepper(), MockHomeSensor([True])
         servo = MockServo(); servo.start()
+        feedback = MockFeedbackPanel()
     else:
         camera = Picamera2Camera(config.camera_width, config.camera_height, config.camera_warmup_seconds)
         model = TFLiteModel(config.model_path, config.model_metadata_path)
@@ -46,13 +48,31 @@ def build_machine(config: SorterConfig, *, simulation: bool, simulation_category
         stepper = LgpioStepper(config.step_gpio, config.direction_gpio, config.enable_gpio, config.reset_gpio, config.sleep_gpio, pulse_delay_seconds=config.step_pulse_seconds); stepper.start()
         home = IRHomeSensor(config.home_gpio, home_level=1); home.start()
         servo = LgpioServo(signal_gpio=config.servo_gpio, reverse=config.servo_reverse); servo.start()
+        feedback = TouchSwitchFeedbackPanel(
+            yes_gpio=config.yes_gpio,
+            no_gpio=config.no_gpio,
+            prev_gpio=config.prev_gpio,
+            next_gpio=config.next_gpio,
+        )
     detector = ObjectPresenceDetector(u1, config.trigger_distance_cm, config.minimum_distance_cm, config.presence_samples, config.clear_samples)
     display = SSD1306I2CDisplay() if config.display == "ssd1306" else ConsoleDisplay()
     position = SorterPositionController(stepper, home, BinPositionPlanner(bin_order=config.bin_order, steps_per_revolution=config.steps_per_revolution, forward_direction=config.forward_direction))
     gate = ServoGate(servo, GateConfig(config.servo_closed_angle, config.servo_open_angle, config.gate_settle_seconds))
     firebase = FirebaseService(database_url=config.firebase_database_url, credentials_path=config.firebase_credentials_path, storage_bucket=config.firebase_storage_bucket)
     retention = ImageRetentionManager(config, firebase)
-    return AutonomousSorter(config=config, detector=detector, camera=camera, model=model, position=position, gate=gate, bin_sensor=u3, firebase=firebase, retention=retention, display=display)
+    return AutonomousSorter(
+        config=config,
+        detector=detector,
+        camera=camera,
+        model=model,
+        position=position,
+        gate=gate,
+        bin_sensor=u3,
+        firebase=firebase,
+        retention=retention,
+        display=display,
+        feedback_panel=feedback,
+    )
 
 
 def main() -> int:

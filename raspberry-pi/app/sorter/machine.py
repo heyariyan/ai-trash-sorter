@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -25,15 +26,31 @@ class SorterState(str, Enum):
     MOVING = "MOVING"
     DROPPING = "DROPPING"
     MEASURING = "MEASURING"
+    FEEDBACK = "FEEDBACK"
     WAITING_FOR_CLEAR = "WAITING_FOR_CLEAR"
     ERROR = "ERROR"
 
 
 class AutonomousSorter:
-    def __init__(self, *, config, detector, camera, model, position, gate, bin_sensor, firebase, retention, display=None) -> None:
+    def __init__(
+        self,
+        *,
+        config,
+        detector,
+        camera,
+        model,
+        position,
+        gate,
+        bin_sensor,
+        firebase,
+        retention,
+        display=None,
+        feedback_panel=None,
+    ) -> None:
         self.config, self.detector, self.camera, self.model = config, detector, camera, model
         self.position, self.gate, self.bin_sensor = position, gate, bin_sensor
         self.firebase, self.retention, self.display = firebase, retention, display
+        self.feedback_panel = feedback_panel
         self.state = SorterState.STARTING
         self.last_prediction = None
         self._waiting_for_clear = False
@@ -49,13 +66,22 @@ class AutonomousSorter:
         self.firebase.publish_status(self.config.device_id, self.status())
 
     def status(self) -> dict:
-        return {"state": self.state.value, "current_position": self.position.current_stop, "position_known": self.position.calibrated, "last_detected_class": getattr(self.last_prediction, "category", None), "confidence": getattr(self.last_prediction, "confidence", None), "model_version": getattr(self.model, "model_version", "unknown")}
+        return {
+            "state": self.state.value,
+            "current_position": self.position.current_stop,
+            "position_known": self.position.calibrated,
+            "last_detected_class": getattr(self.last_prediction, "category", None),
+            "confidence": getattr(self.last_prediction, "confidence", None),
+            "model_version": getattr(self.model, "model_version", "unknown"),
+        }
 
     def start(self) -> None:
         self._set_state(SorterState.STARTING, "Starting")
-        self.camera.start()  # warm camera once
+        self.camera.start()
         self.retention.start()
         self._command_monitor.start()
+        if self.feedback_panel and hasattr(self.feedback_panel, "start"):
+            self.feedback_panel.start()
         self.gate.close()
         self.home()
 
@@ -76,7 +102,6 @@ class AutonomousSorter:
         self._set_state(SorterState.READY, "Ready")
 
     def request_home(self) -> None:
-        """Perform only while idle; Firebase commands call this at the next idle tick."""
         if self.state in (SorterState.READY, SorterState.ERROR):
             self.home()
 
@@ -122,7 +147,10 @@ class AutonomousSorter:
             category = prediction.category.upper()
             if category not in self.config.bin_order:
                 raise InferenceError(f"model returned unsupported category: {category}")
-            if self.config.confidence_threshold is not None and prediction.confidence < self.config.confidence_threshold:
+            if (
+                self.config.confidence_threshold is not None
+                and prediction.confidence < self.config.confidence_threshold
+            ):
                 raise InferenceError(f"confidence {prediction.confidence} below threshold")
         except Exception as exc:
             self._failed_event(event_id, capture_path, "inference", str(exc))
@@ -158,21 +186,108 @@ class AutonomousSorter:
             return {"event_id": event_id, "status": "drop_failed"}
 
         timestamp = prediction.timestamp
-        event = {"event_id": event_id, "timestamp": timestamp, "detected_class": category, "confidence": prediction.confidence, "selected_bin": category, "model_version": prediction.model_version, "inference_time_ms": prediction.inference_time_ms, "sorting_time_ms": round((monotonic() - total_started) * 1000, 3), "movement_steps": plan.steps, "movement_direction": plan.direction, "bin_distance_cm": bin_distance, "feedback_status": "pending", "image_state": "temporary"}
+
+        # ── Interactive Feedback on 4 Physical Buttons + OLED ──
+        feedback_status = "unreviewed"
+        corrected_category = None
+        image_state = "deleted"
+
+        if self.feedback_panel and hasattr(self.feedback_panel, "wait_for_feedback"):
+            self.state = SorterState.FEEDBACK
+            logging.info("Awaiting physical button feedback for %s (8s or until next object)...", category)
+            try:
+                fb_result = self.feedback_panel.wait_for_feedback(
+                    prediction=category,
+                    labels=self.config.bin_order,
+                    display=self.display,
+                    timeout_seconds=getattr(self.config, "feedback_timeout_seconds", 8.0),
+                    interrupt_check=lambda: self.detector.poll().present,
+                )
+                if fb_result.correct is True:
+                    feedback_status = "correct"
+                    image_state = "deleted"
+                    if self.display and hasattr(self.display, "show_feedback_saved"):
+                        self.display.show_feedback_saved("correct")
+                    capture_path.unlink(missing_ok=True)
+                    sleep(1.0)
+                elif fb_result.correct is False and fb_result.corrected_label:
+                    corrected = fb_result.corrected_label.upper()
+                    feedback_status = "corrected"
+                    corrected_category = corrected
+                    image_state = "retained_local"
+                    if self.display and hasattr(self.display, "show_feedback_saved"):
+                        self.display.show_feedback_saved("corrected", corrected)
+                    # Retain image locally under feedback/<CORRECTED>/
+                    target_dir = self.config.feedback_images_dir / corrected
+                    target_dir.mkdir(parents=True, exist_ok=True)
+                    stamp = timestamp.replace(":", "-").replace("+", "_")
+                    target_path = target_dir / f"{stamp}_{event_id}_pred-{category}_label-{corrected}.jpg"
+                    if capture_path.exists():
+                        shutil.move(str(capture_path), str(target_path))
+                        logging.info("Wrong prediction image saved locally: %s", target_path)
+                    sleep(1.5)
+                else:
+                    # Timeout — discard temporary image
+                    feedback_status = "unreviewed"
+                    image_state = "deleted"
+                    capture_path.unlink(missing_ok=True)
+            except Exception as e:
+                logging.error("Feedback handling error: %s", e)
+                capture_path.unlink(missing_ok=True)
+        else:
+            capture_path.unlink(missing_ok=True)
+
+        event = {
+            "event_id": event_id,
+            "timestamp": timestamp,
+            "detected_class": category,
+            "confidence": prediction.confidence,
+            "selected_bin": category,
+            "model_version": prediction.model_version,
+            "inference_time_ms": prediction.inference_time_ms,
+            "sorting_time_ms": round((monotonic() - total_started) * 1000, 3),
+            "movement_steps": plan.steps,
+            "movement_direction": plan.direction,
+            "bin_distance_cm": bin_distance,
+            "feedback_status": feedback_status,
+            "corrected_category": corrected_category,
+            "image_state": image_state,
+        }
+
         self._append_journal(event)
-        self.firebase.submit_set(f"devices/{self.config.device_id}/events/{event_id}", event)
-        self.firebase.submit_update(f"devices/{self.config.device_id}/bins/{category}", {"distance_cm": bin_distance, "updated_at": timestamp})
-        self.retention.register(event_id=event_id, image_path=capture.path, prediction=category, timestamp=timestamp)
+        # Keep only latest 10 events in Firebase Realtime Database
+        max_events = getattr(self.config, "firebase_max_events", 10)
+        self.firebase.submit_event(self.config.device_id, event_id, event, max_events=max_events)
+        self.firebase.submit_update(
+            f"devices/{self.config.device_id}/bins/{category}",
+            {"distance_cm": bin_distance, "updated_at": timestamp},
+        )
+
         self._waiting_for_clear = True
         self._set_state(SorterState.WAITING_FOR_CLEAR, "Remove next object")
-        return {"status": "sorted", **event, "position": asdict(plan), "camera_capture_ms": capture.capture_time_ms, "sensor_distance_cm": presence.distance_cm}
+        return {
+            "status": "sorted",
+            **event,
+            "position": asdict(plan),
+            "camera_capture_ms": capture.capture_time_ms,
+            "sensor_distance_cm": presence.distance_cm,
+        }
 
     def _failed_event(self, event_id: str, image_path: Path, stage: str, error: str) -> None:
         self._safe_close_gate()
-        self.retention.retain_diagnostic(image_path, event_id)
-        event = {"event_id": event_id, "timestamp": datetime.now(timezone.utc).isoformat(), "success": False, "failure_stage": stage, "error": error, "feedback_status": "unavailable", "image_state": "diagnostic" if self.config.failed_image_retention else "deleted"}
+        image_path.unlink(missing_ok=True)
+        event = {
+            "event_id": event_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "success": False,
+            "failure_stage": stage,
+            "error": error,
+            "feedback_status": "unavailable",
+            "image_state": "deleted",
+        }
         self._append_journal(event)
-        self.firebase.submit_set(f"devices/{self.config.device_id}/events/{event_id}", event)
+        max_events = getattr(self.config, "firebase_max_events", 10)
+        self.firebase.submit_event(self.config.device_id, event_id, event, max_events=max_events)
         if self.display:
             self.display.show_error(f"{stage}: {error}")
         logging.error("cycle %s failed at %s: %s", event_id, stage, error)
@@ -192,11 +307,21 @@ class AutonomousSorter:
         self._safe_close_gate()
         self._command_monitor.close()
         self.retention.close()
-        for component in (self.camera, self.position.stepper, self.position.home_sensor, self.bin_sensor, getattr(self.gate, "servo", None), self.firebase):
+        for component in (
+            self.camera,
+            self.position.stepper,
+            self.position.home_sensor,
+            self.bin_sensor,
+            getattr(self.gate, "servo", None),
+            self.feedback_panel,
+            self.firebase,
+        ):
             close = getattr(component, "close", None)
             stop = getattr(component, "stop", None)
             try:
-                if callable(close): close()
-                elif callable(stop): stop()
+                if callable(close):
+                    close()
+                elif callable(stop):
+                    stop()
             except Exception:
                 logging.exception("shutdown failed for %s", component)

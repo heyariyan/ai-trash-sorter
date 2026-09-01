@@ -89,6 +89,14 @@ class LgpioServo:
     def set_angle(self, angle: float) -> None:
         self.set_pulse_us(self.pulse_for_angle(angle))
 
+    def detach(self) -> None:
+        """Turn off PWM signal to eliminate buzzing, jitter, and idle motor strain."""
+        if self._gpio is not None and self._handle is not None:
+            try:
+                self._gpio.tx_servo(self._handle, self.signal_gpio, 0, 0)
+            except Exception:
+                pass
+
     def stop(self) -> None:
         if self._gpio is None or self._handle is None:
             return
@@ -152,9 +160,13 @@ class ServoGate:
     def close(self) -> None:
         self.servo.set_angle(self.config.closed_angle)
         sleep(self.config.settle_seconds)
+        if hasattr(self.servo, "detach"):
+            self.servo.detach()
         self.is_open = False
 
     def open(self) -> None:
         self.servo.set_angle(self.config.open_angle)
         sleep(self.config.settle_seconds)
+        if hasattr(self.servo, "detach"):
+            self.servo.detach()
         self.is_open = True
