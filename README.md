@@ -189,10 +189,12 @@ Novi/
 
 ---
 
-##👥 Authors & Contributors
+## 👥 Authors & Contributors
 
-* **Ariyan Haque** (@heyariyan) — Lead Creator, Embedded Systems, Hardware & Neural AI Architecture
-* Ahan Ghosh (@TheAhan007) — Hardware Design, Assembly & Testing Contributor
+* **Ariyan Haque** ([@heyariyan](https://github.com/heyariyan)) — *Lead Creator, Embedded Systems, Hardware & Neural AI Architecture*
+  
+* **Ahan Ghosh** ([@theahan007](https://github.com/theahan007)) — *Hardware Design, Assembly & Testing Contributor*
+  
 ---
 
 ## 🤝 Contributing
