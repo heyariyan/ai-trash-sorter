@@ -189,6 +189,31 @@ Novi/
 
 ---
 
+## 👥 Authors & Contributors
+
+* **Ariyan Haque** ([@heyariyan](https://github.com/heyariyan)) — *Lead Creator, Embedded Systems, Hardware & Neural AI Architecture*
+* **Ahan Ghosh** — *Hardware Design, Assembly & Testing Contributor*
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/heyariyan/ai-trash-sorter/issues).
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is open-source and licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ for a cleaner, smarter, and more sustainable future.</sub>
+</div>
