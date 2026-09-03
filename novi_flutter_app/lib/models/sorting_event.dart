@@ -1,8 +1,4 @@
-// Data models for the Novi sorter app.
-//
-// These are plain Dart classes that mirror the Firebase Realtime Database
-// JSON shape written by the Raspberry Pi.  The Pi is the source of truth;
-// the app only reads and displays.
+import 'package:intl/intl.dart';
 
 class DeviceStatus {
   final String state;
@@ -12,6 +8,10 @@ class DeviceStatus {
   final double? confidence;
   final String? modelVersion;
   final DateTime? updatedAt;
+  final double? intakeDistanceCm;
+  final double? binDistanceCm;
+  final bool? homeSensorActive;
+  final double? servoAngle;
 
   const DeviceStatus({
     required this.state,
@@ -21,22 +21,30 @@ class DeviceStatus {
     this.confidence,
     this.modelVersion,
     this.updatedAt,
+    this.intakeDistanceCm,
+    this.binDistanceCm,
+    this.homeSensorActive,
+    this.servoAngle,
   });
 
-  bool get isOnline =>
-      state == 'READY' ||
-      state == 'WAITING_FOR_CLEAR' ||
-      state == 'DETECTED' ||
-      state == 'CAPTURING' ||
-      state == 'CLASSIFYING' ||
-      state == 'MOVING' ||
-      state == 'DROPPING' ||
-      state == 'MEASURING';
+  bool get isOnline {
+    if (updatedAt != null) {
+      final diff = DateTime.now().toUtc().difference(updatedAt!);
+      if (diff.inSeconds > 45) return false;
+    }
+    return state != 'OFFLINE' && state.isNotEmpty;
+  }
 
+  bool get isReady => state.toUpperCase() == 'READY';
   bool get isBusy =>
-      state != 'READY' && state != 'WAITING_FOR_CLEAR' && state != 'OFFLINE';
+      state.isNotEmpty &&
+      state != 'READY' &&
+      state != 'WAITING_FOR_CLEAR' &&
+      state != 'OFFLINE' &&
+      state != 'ERROR';
+  bool get isError => state.toUpperCase() == 'ERROR';
 
-  factory DeviceStatus.fromMap(Map<String, dynamic> map) {
+  factory DeviceStatus.fromMap(Map<dynamic, dynamic> map) {
     return DeviceStatus(
       state: _str(map['state'], 'OFFLINE'),
       currentPosition: _str(map['current_position'], null),
@@ -45,6 +53,10 @@ class DeviceStatus {
       confidence: _dbl(map['confidence'], null),
       modelVersion: _str(map['model_version'], null),
       updatedAt: _ts(map['updated_at']),
+      intakeDistanceCm: _dbl(map['intake_distance_cm'], null),
+      binDistanceCm: _dbl(map['bin_distance_cm'], null),
+      homeSensorActive: _bool(map['home_sensor_active'], false),
+      servoAngle: _dbl(map['servo_angle'], null),
     );
   }
 
@@ -56,10 +68,25 @@ class BinStatus {
   final double? distanceCm;
   final DateTime? updatedAt;
 
-  const BinStatus({required this.category, this.distanceCm, this.updatedAt});
+  const BinStatus({
+    required this.category,
+    this.distanceCm,
+    this.updatedAt,
+  });
 
-  factory BinStatus.fromMap(String key, Map<String, dynamic> map) =>
-      BinStatus(
+  /// Capacity percentage (0.0 to 1.0)
+  /// Sorter ultrasonic sensor: ~30cm = empty (0%), ~5cm = full (100%)
+  double get fillPercentage {
+    if (distanceCm == null) return 0.0;
+    const maxEmptyDistance = 28.0; // cm
+    const minFullDistance = 4.0; // cm
+    final clamped = distanceCm!.clamp(minFullDistance, maxEmptyDistance);
+    return 1.0 - ((clamped - minFullDistance) / (maxEmptyDistance - minFullDistance));
+  }
+
+  bool get isNearFull => fillPercentage >= 0.80;
+
+  factory BinStatus.fromMap(String key, Map<dynamic, dynamic> map) => BinStatus(
         category: key,
         distanceCm: _dbl(map['distance_cm'], null),
         updatedAt: _ts(map['updated_at']),
@@ -107,7 +134,38 @@ class SortingEvent {
     this.error,
   });
 
-  factory SortingEvent.fromMap(String id, Map<String, dynamic> map) {
+  DateTime? get parsedTime {
+    if (timestamp == null || timestamp!.isEmpty) return null;
+    try {
+      return DateTime.parse(timestamp!);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String get formattedTime {
+    final t = parsedTime;
+    if (t == null) return timestamp ?? '—';
+    return DateFormat('MMM d, h:mm:ss a').format(t.toLocal());
+  }
+
+  String get relativeTime {
+    final t = parsedTime;
+    if (t == null) return 'Just now';
+    final now = DateTime.now();
+    final diff = now.difference(t.toLocal());
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  String get confidencePercent {
+    if (confidence == null) return '—';
+    return '${(confidence! * 100).toStringAsFixed(1)}%';
+  }
+
+  factory SortingEvent.fromMap(String id, Map<dynamic, dynamic> map) {
     return SortingEvent(
       eventId: id,
       detectedClass: _str(map['detected_class'], null),
@@ -129,6 +187,27 @@ class SortingEvent {
       error: _str(map['error'], null),
     );
   }
+
+  Map<String, dynamic> toMap() => {
+        'eventId': eventId,
+        'detectedClass': detectedClass,
+        'selectedBin': selectedBin,
+        'confidence': confidence,
+        'timestamp': timestamp,
+        'modelVersion': modelVersion,
+        'inferenceTimeMs': inferenceTimeMs,
+        'sortingTimeMs': sortingTimeMs,
+        'movementSteps': movementSteps,
+        'movementDirection': movementDirection,
+        'binDistanceCm': binDistanceCm,
+        'feedbackStatus': feedbackStatus,
+        'correctedCategory': correctedCategory,
+        'imageState': imageState,
+        'imageStoragePath': imageStoragePath,
+        'success': success,
+        'failureStage': failureStage,
+        'error': error,
+      };
 }
 
 class SorterStats {
@@ -137,6 +216,8 @@ class SorterStats {
   final int incorrectCount;
   final int pendingCount;
   final double accuracy;
+  final double avgInferenceTimeMs;
+  final double avgSortingTimeMs;
   final Map<String, int> classCounts;
   final Map<String, int> binCounts;
 
@@ -146,29 +227,60 @@ class SorterStats {
     this.incorrectCount = 0,
     this.pendingCount = 0,
     this.accuracy = 0,
+    this.avgInferenceTimeMs = 0,
+    this.avgSortingTimeMs = 0,
     this.classCounts = const {},
     this.binCounts = const {},
   });
 
   factory SorterStats.fromEvents(List<SortingEvent> events) {
     int correct = 0, incorrect = 0, pending = 0;
-    final classCounts = <String, int>{};
-    final binCounts = <String, int>{};
+    double totalInfTime = 0;
+    int infCount = 0;
+    double totalSortTime = 0;
+    int sortCount = 0;
+
+    final classCounts = <String, int>{
+      'BIODEGRADABLE': 0,
+      'PLASTIC': 0,
+      'METAL': 0,
+      'OTHER': 0,
+    };
+    final binCounts = <String, int>{
+      'BIODEGRADABLE': 0,
+      'PLASTIC': 0,
+      'METAL': 0,
+      'OTHER': 0,
+    };
+
     for (final e in events) {
       if (e.feedbackStatus == 'correct') {
         correct++;
       } else if (e.feedbackStatus == 'incorrect') {
         incorrect++;
-      } else if (e.feedbackStatus == 'pending') {
+      } else {
         pending++;
       }
+
       if (e.detectedClass != null) {
-        classCounts[e.detectedClass!] = (classCounts[e.detectedClass!] ?? 0) + 1;
+        final c = e.detectedClass!.toUpperCase();
+        classCounts[c] = (classCounts[c] ?? 0) + 1;
       }
       if (e.selectedBin != null) {
-        binCounts[e.selectedBin!] = (binCounts[e.selectedBin!] ?? 0) + 1;
+        final b = e.selectedBin!.toUpperCase();
+        binCounts[b] = (binCounts[b] ?? 0) + 1;
+      }
+
+      if (e.inferenceTimeMs != null && e.inferenceTimeMs! > 0) {
+        totalInfTime += e.inferenceTimeMs!;
+        infCount++;
+      }
+      if (e.sortingTimeMs != null && e.sortingTimeMs! > 0) {
+        totalSortTime += e.sortingTimeMs!;
+        sortCount++;
       }
     }
+
     final judged = correct + incorrect;
     return SorterStats(
       totalEvents: events.length,
@@ -176,9 +288,34 @@ class SorterStats {
       incorrectCount: incorrect,
       pendingCount: pending,
       accuracy: judged > 0 ? (correct / judged * 100) : 0,
+      avgInferenceTimeMs: infCount > 0 ? (totalInfTime / infCount) : 0,
+      avgSortingTimeMs: sortCount > 0 ? (totalSortTime / sortCount) : 0,
       classCounts: classCounts,
       binCounts: binCounts,
     );
+  }
+
+  static String exportToCsv(List<SortingEvent> events) {
+    final buffer = StringBuffer();
+    buffer.writeln(
+        'Event ID,Timestamp,Detected Class,Selected Bin,Confidence,Success,Feedback Status,Corrected Category,Inference Time (ms),Sorting Time (ms),Movement Steps,Bin Distance (cm)');
+    for (final e in events) {
+      buffer.writeln([
+        e.eventId,
+        e.timestamp ?? '',
+        e.detectedClass ?? '',
+        e.selectedBin ?? '',
+        e.confidence != null ? (e.confidence! * 100).toStringAsFixed(1) : '',
+        e.success ? 'TRUE' : 'FALSE',
+        e.feedbackStatus,
+        e.correctedCategory ?? '',
+        e.inferenceTimeMs?.toStringAsFixed(1) ?? '',
+        e.sortingTimeMs?.toStringAsFixed(1) ?? '',
+        e.movementSteps?.toString() ?? '',
+        e.binDistanceCm?.toStringAsFixed(1) ?? '',
+      ].map((field) => '"${field.replaceAll('"', '""')}"').join(','));
+    }
+    return buffer.toString();
   }
 }
 
@@ -206,17 +343,21 @@ bool _bool(Object? v, bool fallback) {
   if (v == null) return fallback;
   if (v is bool) return v;
   if (v is num) return v != 0;
-  if (v is String) return v.toLowerCase() == 'true';
-  return fallback;
+  final s = v.toString().trim().toLowerCase();
+  return s == 'true' || s == '1';
 }
 
 DateTime? _ts(Object? v) {
   if (v == null) return null;
   if (v is int) {
-    return DateTime.fromMillisecondsSinceEpoch(v);
+    return DateTime.fromMillisecondsSinceEpoch(v, isUtc: true);
   }
   if (v is String) {
-    return DateTime.tryParse(v);
+    try {
+      return DateTime.parse(v);
+    } catch (_) {
+      return null;
+    }
   }
   return null;
 }

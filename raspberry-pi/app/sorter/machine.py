@@ -146,21 +146,29 @@ class AutonomousSorter:
                 self.display.show_prediction(prediction.category, prediction.confidence)
             category = prediction.category.upper()
             if category not in self.config.bin_order:
-                raise InferenceError(f"model returned unsupported category: {category}")
-            if (
-                self.config.confidence_threshold is not None
-                and prediction.confidence < self.config.confidence_threshold
-            ):
-                raise InferenceError(f"confidence {prediction.confidence} below threshold")
+                category = "OTHER"
         except Exception as exc:
             self._failed_event(event_id, capture_path, "inference", str(exc))
             self._waiting_for_clear = True
             self._set_state(SorterState.WAITING_FOR_CLEAR, "Classification failed")
             return {"event_id": event_id, "status": "classification_failed"}
 
+        # Routing Policy: Only route to classified bin if confidence >= 75% (0.75).
+        # Otherwise, safely drop into the OTHER bin (low confidence / unclassified).
+        CONFIDENCE_TARGET_THRESHOLD = 0.75
+        if prediction.confidence >= CONFIDENCE_TARGET_THRESHOLD and category in self.config.bin_order:
+            target_bin = category
+        else:
+            target_bin = "OTHER"
+            logging.info(
+                "Prediction %s confidence %.1f%% < 75%% -> Routing to OTHER bin",
+                category,
+                prediction.confidence * 100,
+            )
+
         try:
-            self._set_state(SorterState.MOVING, f"Moving to {category}")
-            plan = self.position.move_to(category)
+            self._set_state(SorterState.MOVING, f"Moving to {target_bin}")
+            plan = self.position.move_to(target_bin)
         except Exception as exc:
             self.position.invalidate_position()
             self._safe_close_gate()
@@ -169,7 +177,7 @@ class AutonomousSorter:
             return {"event_id": event_id, "status": "movement_failed"}
 
         try:
-            self._set_state(SorterState.DROPPING, f"Dropping into {category}")
+            self._set_state(SorterState.DROPPING, f"Dropping into {target_bin}")
             self.gate.open()
             sleep(self.config.drop_delay_seconds)
             self.gate.close()
@@ -177,7 +185,7 @@ class AutonomousSorter:
             sleep(self.config.post_drop_settle_seconds)
             bin_distance = self.bin_sensor.read_distance_cm() if self.bin_sensor else None
             if self.display:
-                self.display.show_bin_status(category, bin_distance)
+                self.display.show_bin_status(target_bin, bin_distance)
         except Exception as exc:
             self._safe_close_gate()
             self._failed_event(event_id, capture_path, "gate_or_bin_measurement", str(exc))
@@ -242,7 +250,7 @@ class AutonomousSorter:
             "timestamp": timestamp,
             "detected_class": category,
             "confidence": prediction.confidence,
-            "selected_bin": category,
+            "selected_bin": target_bin,
             "model_version": prediction.model_version,
             "inference_time_ms": prediction.inference_time_ms,
             "sorting_time_ms": round((monotonic() - total_started) * 1000, 3),
@@ -259,7 +267,7 @@ class AutonomousSorter:
         max_events = getattr(self.config, "firebase_max_events", 10)
         self.firebase.submit_event(self.config.device_id, event_id, event, max_events=max_events)
         self.firebase.submit_update(
-            f"devices/{self.config.device_id}/bins/{category}",
+            f"devices/{self.config.device_id}/bins/{target_bin}",
             {"distance_cm": bin_distance, "updated_at": timestamp},
         )
 

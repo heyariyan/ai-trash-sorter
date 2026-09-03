@@ -78,7 +78,10 @@ class TFLiteModel:
 
         factory = interpreter_factory or _load_interpreter_factory()
         try:
-            self._interpreter = factory(model_path=str(self.model_path))
+            try:
+                self._interpreter = factory(model_path=str(self.model_path), num_threads=2)
+            except TypeError:
+                self._interpreter = factory(model_path=str(self.model_path))
             self._interpreter.allocate_tensors()
             inputs = self._interpreter.get_input_details()
             outputs = self._interpreter.get_output_details()
@@ -106,7 +109,7 @@ class TFLiteModel:
                 image = image.convert("RGB").resize(
                     (self.width, self.height), Image.Resampling.BILINEAR
                 )
-                pixels = np.asarray(image, dtype=np.float32) / 255.0
+                pixels = np.asarray(image, dtype=np.float32)
         except (OSError, ValueError, ImportError) as exc:
             raise InferenceError(f"unable to read image: {image_path}") from exc
 

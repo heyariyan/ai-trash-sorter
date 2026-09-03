@@ -75,6 +75,7 @@ class TouchSwitchFeedbackPanel:
         self.poll_seconds = poll_seconds
         self._gpio = None
         self._handle: int | None = None
+        self._baselines: dict[int, int] = {}
 
     def start(self) -> None:
         if self._handle is not None:
@@ -85,13 +86,19 @@ class TouchSwitchFeedbackPanel:
             import lgpio
 
             handle = lgpio.gpiochip_open(self.chip)
-            # Use SET_PULL_DOWN if active_level is 1, so open switches stay 0
             bias = lgpio.SET_PULL_DOWN if self.active_level == 1 else lgpio.SET_PULL_UP
             for pin in (self.yes_gpio, self.no_gpio, self.prev_gpio, self.next_gpio):
                 try:
                     lgpio.gpio_claim_input(handle, pin, bias)
                 except Exception:
                     lgpio.gpio_claim_input(handle, pin)
+            
+            # Read idle baselines for each pin so both active-high & active-low work automatically
+            sleep(0.05)
+            self._baselines = {
+                pin: int(lgpio.gpio_read(handle, pin))
+                for pin in (self.yes_gpio, self.no_gpio, self.prev_gpio, self.next_gpio)
+            }
         except Exception as exc:
             try:
                 if lgpio is not None and handle is not None:
@@ -108,18 +115,18 @@ class TouchSwitchFeedbackPanel:
         return self._gpio, self._handle
 
     def _pressed(self, pin: int) -> bool:
-        """Sample multiple times with short delay to filter high-frequency noise."""
+        """Sample multiple times with edge detection against idle baseline."""
         gpio, handle = self._require_started()
-        val1 = int(gpio.gpio_read(handle, pin)) == self.active_level
+        baseline = self._baselines.get(pin, 0)
+        # Pressed when state deviates from baseline
+        val1 = int(gpio.gpio_read(handle, pin)) != baseline
         if not val1:
             return False
-        # Verify with 2 more samples 10ms apart (30ms total stable window)
-        sleep(0.01)
-        val2 = int(gpio.gpio_read(handle, pin)) == self.active_level
-        if not val2:
-            return False
-        sleep(0.01)
-        val3 = int(gpio.gpio_read(handle, pin)) == self.active_level
+        # Debounce: verify deviation persists for 30ms
+        sleep(0.015)
+        val2 = int(gpio.gpio_read(handle, pin)) != baseline
+        sleep(0.015)
+        val3 = int(gpio.gpio_read(handle, pin)) != baseline
         return val1 and val2 and val3
 
     def _wait_press(
@@ -128,18 +135,27 @@ class TouchSwitchFeedbackPanel:
         timeout_seconds: float,
         interrupt_check=None,
     ) -> int | None:
-        deadline = monotonic() + timeout_seconds
+        started = monotonic()
+        deadline = started + timeout_seconds
+
+        # First, ensure all buttons are released before registering a new click
+        for _ in range(10):
+            if any(self._pressed(p) for p in pins):
+                sleep(0.05)
+            else:
+                break
+
         while monotonic() < deadline:
-            if interrupt_check and interrupt_check():
+            # Only allow ultrasonic interruption after 1.5s grace window so previous object clear doesn't interrupt
+            if interrupt_check and (monotonic() - started > 1.5) and interrupt_check():
                 return None
             for pin in pins:
                 if self._pressed(pin):
-                    # 30ms hardware debounce to filter out momentary noise
-                    sleep(0.03)
-                    if self._pressed(pin):
-                        while self._pressed(pin) and monotonic() < deadline:
-                            sleep(self.poll_seconds)
-                        return pin
+                    # Await button release
+                    release_deadline = monotonic() + 2.0
+                    while self._pressed(pin) and monotonic() < release_deadline:
+                        sleep(self.poll_seconds)
+                    return pin
             sleep(self.poll_seconds)
         return None
 

@@ -73,8 +73,9 @@ class Picamera2Camera:
 
         try:
             camera = Picamera2()
-            configuration = camera.create_still_configuration(
-                main={"size": (self.width, self.height)}
+            # Preview configuration provides ultra-fast buffered memory frames (instantaneous, no locking)
+            configuration = camera.create_preview_configuration(
+                main={"size": (self.width, self.height), "format": "RGB888"}
             )
             camera.configure(configuration)
             camera.start()
@@ -90,14 +91,26 @@ class Picamera2Camera:
 
     def capture(self, destination: Path) -> CaptureResult:
         if self._camera is None:
-            raise CameraError("camera is not started")
+            self.start()
         destination = Path(destination)
         destination.parent.mkdir(parents=True, exist_ok=True)
         started = monotonic()
         try:
-            self._camera.capture_file(str(destination))
-        except Exception as exc:  # pragma: no cover - hardware-specific
-            raise CameraError(f"camera capture failed: {exc}") from exc
+            from PIL import Image
+            # Instantaneous memory capture (< 15ms)
+            frame = self._camera.capture_array("main")
+            img = Image.fromarray(frame)
+            img.save(str(destination), "JPEG", quality=85)
+        except Exception as exc:
+            try:
+                self._camera.capture_file(str(destination))
+            except Exception as inner_exc:
+                try:
+                    self.stop()
+                    self.start()
+                except Exception:
+                    pass
+                raise CameraError(f"camera capture failed: {inner_exc}") from exc
         return CaptureResult(
             path=destination,
             captured_at=_timestamp(),

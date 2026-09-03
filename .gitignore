@@ -39,6 +39,8 @@ events.jsonl
 /novi_flutter_app/.dart_tool/
 /novi_flutter_app/.flutter-plugins
 /novi_flutter_app/.flutter-plugins-dependencies
+novi_flutter_app/.firebase/
+.firebase/
 
 # IDEs and OS files
 .DS_Store

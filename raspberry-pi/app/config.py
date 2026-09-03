@@ -18,11 +18,11 @@ class SorterConfig:
     model_metadata_path: Path | None = None
     data_dir: Path = Path("/var/lib/ai-trash-sorter")
     trigger_distance_cm: float = 7.0
-    minimum_distance_cm: float = 1.5
+    minimum_distance_cm: float = 0.0
     presence_samples: int = 2
     clear_samples: int = 2
     poll_seconds: float = 0.05
-    confidence_threshold: float | None = None
+    confidence_threshold: float | None = 0.75
     camera_width: int = 640
     camera_height: int = 480
     camera_warmup_seconds: float = 1.0
@@ -39,8 +39,8 @@ class SorterConfig:
     enable_gpio: int = 8
     reset_gpio: int = 7
     sleep_gpio: int = 9
-    steps_per_revolution: int = 600
-    step_pulse_seconds: float = 0.003
+    steps_per_revolution: int = 200
+    step_pulse_seconds: float = 0.005
     forward_direction: int = 1
     bin_order: tuple[str, ...] = DEFAULT_BINS
     servo_gpio: int = 18
